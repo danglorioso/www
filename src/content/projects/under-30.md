@@ -1,6 +1,6 @@
 ---
 title: "Under 30 VSCode Extension"
-description: "A Visual Studio Code extension that promotes good coding standards by displaying real-time line selection counts and detecting functions that exceed customizable length thresholds. Used by 700+ users."
+description: "A Visual Studio Code extension that promotes good coding standards by displaying real-time line selection counts and detecting functions that exceed customizable length thresholds. Used by 800+ users."
 # Under 30 is a Visual Studio Code extension that helps developers maintain clean, readable code by displaying real-time line selection counts in the status bar and automatically detecting functions that exceed customizable length limits. The extension identifies formatting errors like unmatched braces and provides instant feedback to ensure your code adheres to professional coding standards.
 startDate: 2024-05-13
 endDate: 2025-01-13
