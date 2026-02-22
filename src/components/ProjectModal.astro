@@ -321,24 +321,32 @@ const currentStatus = statusConfig[project.data.status as keyof typeof statusCon
     transition-duration: 0ms;
   }
 
+  .project-modal [data-modal-backdrop] {
+    transition: backdrop-filter 0ms ease-out, background-color 0ms ease-out;
+  }
+
   .project-modal[data-open="false"] [data-modal-backdrop] {
     backdrop-filter: none;
+    background-color: transparent;
   }
 
   /* Promote backdrop to own layer so blur applies immediately when modal opens */
   .project-modal[data-open="true"] [data-modal-backdrop] {
     transform: translateZ(0);
+    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.2);
   }
 
   .project-modal [data-modal-panel] {
     opacity: 0;
     transform: scale(0.95) translateY(1rem);
-    transition: opacity 300ms ease-out, transform 300ms ease-out;
+    transition: opacity 100ms ease-out, transform 500ms ease-out;
   }
 
   .project-modal[data-open="true"] [data-modal-panel] {
     opacity: 1;
     transform: scale(1) translateY(0);
+    transition: opacity 100ms ease-out, transform 500ms ease-out;
   }
 
   /* Closing: panel animates out (mirror of open), then overlay fades */
