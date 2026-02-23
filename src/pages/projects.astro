@@ -38,7 +38,7 @@ const categories = Array.from(categorySet).sort();
 
 <Layout title="Projects" description="">
   <section id="projects">
-    <div class="h-full w-full flex flex-col gap-6">
+    <div id="projects-content" class="h-full w-full flex flex-col gap-6 transition-all duration-300">
       <!-- Page Header -->
       <section class="">
         <h1 class="text-4xl font-bold text-text-primary">Projects</h1>
@@ -240,16 +240,23 @@ const categories = Array.from(categorySet).sort();
       const setOpen = (modal: HTMLElement, open: boolean) => {
         modal.dataset.open = open ? "true" : "false";
         modal.setAttribute("aria-hidden", open ? "false" : "true");
+        const projectsContent = document.getElementById("projects-content");
         if (open) {
           scrollY = window.scrollY;
           html.classList.add("modal-open");
           body.classList.add("modal-open");
           body.style.top = `-${scrollY}px`;
+          if (projectsContent) {
+            projectsContent.classList.add("blur-sm", "pointer-events-none");
+          }
         } else if (!activeModal) {
           html.classList.remove("modal-open");
           body.classList.remove("modal-open");
           body.style.top = "";
           window.scrollTo(0, scrollY);
+          if (projectsContent) {
+            projectsContent.classList.remove("blur-sm", "pointer-events-none");
+          }
         }
       };
 
@@ -271,6 +278,10 @@ const categories = Array.from(categorySet).sort();
           body.classList.remove("modal-open");
           body.style.top = "";
           window.scrollTo(0, scrollY);
+          const projectsContent = document.getElementById("projects-content");
+          if (projectsContent) {
+            projectsContent.classList.remove("blur-sm", "pointer-events-none");
+          }
         };
 
         const onTransitionEnd = (e: TransitionEvent) => {
@@ -287,7 +298,6 @@ const categories = Array.from(categorySet).sort();
         // otherwise replace to the base projects path so the URL and UI stay in sync.
         try {
           const currentPathMatch = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/);
-          const modalSlug = modalToClose.dataset.projectModal;
           if (currentPathMatch && currentPathMatch[1]) {
             if (history.state && history.state.projectSlug === currentPathMatch[1]) {
               history.back();
@@ -327,7 +337,7 @@ const categories = Array.from(categorySet).sort();
       };
 
       // Listen to history navigation to open/close modal appropriately
-      window.addEventListener("popstate", (ev) => {
+      window.addEventListener("popstate", () => {
         // If location matches modal path, open; otherwise close any open modal
         const m = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/);
         if (m && m[1]) {

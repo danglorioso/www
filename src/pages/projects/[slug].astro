@@ -1,87 +1,73 @@
 ---
-import { getCollection } from "astro:content";
-import type { CollectionEntry } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+import ProjectModal from "../../components/ProjectModal.astro";
+import { getCollection } from "astro:content";
 
 export const prerender = true;
 
 export async function getStaticPaths() {
-  try {
-    const projects = await getCollection("projects");
-
-    return projects
-      .filter((project) => !project.data.draft)
-      .map((project) => ({
-        params: { slug: project.slug },
-        props: { project },
-      }));
-  } catch (error) {
-    console.error("Error in getStaticPaths:", error);
-    return [];
-  }
+  const projects = await getCollection("projects", ({ data }) => {
+    return data.draft !== true;
+  });
+  
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+  }));
 }
 
-type Props = {
-  project: CollectionEntry<"projects">;
-};
+// Get all projects and sort
+const allProjects = await getCollection("projects", ({ data }) => {
+  // Only non-draft projects returned
+  return data.draft !== true;
+});
 
-const { project } = Astro.props;
-const { Content } = await project.render();
-
-// Get related projects (sharing at least one category, excluding current project)
-const allProjects = await getCollection("projects");
-const projectCategories = project.data.categories || [];
-const relatedProjects = allProjects
-  .filter(
-    (p) => {
-      if (p.slug === project.slug || p.data.draft) {
-        return false;
-      }
-      const pCategories = p.data.categories || [];
-      // Check if projects share at least one category
-      return projectCategories.some((cat) => pCategories.includes(cat));
-    }
-  )
-  .slice(0, 3);
-
-// Format date function
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-};
-
-// Get status badge styling
-const getStatusStyle = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "bg-green-400/10 text-green-400 border-green-400/20";
-    case "in-progress":
-      return "bg-blue-400/10 text-blue-400 border-blue-400/20";
-    case "planned":
-      return "bg-yellow-400/10 text-yellow-400 border-yellow-400/20";
-    case "archived":
-      return "bg-gray-400/10 text-gray-400 border-gray-400/20";
-    default:
-      return "bg-slate-400/10 text-slate-400 border-slate-400/20";
+// Sort projects by priority (higher first), then by start date (newer first)
+const sortedProjects = allProjects.sort((a, b) => {
+  if (a.data.priority !== b.data.priority) {
+    // Higher priority first
+    return b.data.priority - a.data.priority;
   }
-};
+  // Newer first
+  return (
+    new Date(b.data.startDate).getTime() - new Date(a.data.startDate).getTime()
+  );
+});
+
+// Get unique categories from all projects (flattening arrays)
+const categorySet = new Set<string>();
+sortedProjects.forEach((p) => {
+  if (p.data.categories && Array.isArray(p.data.categories)) {
+    p.data.categories.forEach((cat) => {
+      if (cat && typeof cat === "string" && cat.trim() !== "") {
+        categorySet.add(cat);
+      }
+    });
+  }
+});
+const categories = Array.from(categorySet).sort();
 ---
 
-<Layout title={project.data.title}>
-  <main class="min-h-screen pb-16">
-    <div class="max-w-5xl mx-auto">
-      <!-- Back to projects -->
-      <div class="mb-8">
-        <a
-          href="/projects"
-          class="inline-flex items-center text-slate-400 hover:text-blue-400 transition-colors duration-200"
-        >
+<Layout title="Projects" description="">
+  <section id="projects">
+    <div id="projects-content" class="h-full w-full flex flex-col gap-6 transition-all duration-300">
+      <!-- Page Header -->
+      <section class="">
+        <h1 class="text-4xl font-bold text-text-primary">Projects</h1>
+      </section>
+
+      <!-- Search and Filter Controls -->
+      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+        <!-- Search Input -->
+        <div class="flex-1 relative">
+          <input
+            type="text"
+            id="project-search"
+            placeholder="Search projects..."
+            class="bg-bg-card px-4 py-2.5 w-full rounded-lg text-text-primary placeholder-text-secondary border border-border-tertiary focus:ring-1 focus:ring-accent-primary focus:outline-none focus:border-accent-primary"
+          />
           <svg
-            class="w-4 h-4 mr-2"
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary pointer-events-none"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -90,369 +76,327 @@ const getStatusStyle = (status: string) => {
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M15 19l-7-7 7-7"></path>
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
-          Back to Projects
-        </a>
+        </div>
+
+        <!-- Category Filter Dropdown -->
+        <div class="relative sm:w-64">
+          <select
+            id="category-filter"
+            class="w-full px-4 py-2.5 bg-bg-card rounded-lg text-text-primary border border-border-tertiary focus:ring-1 focus:ring-accent-primary focus:outline-none focus:border-accent-primary appearance-none cursor-pointer"
+          >
+            <option value="">All Categories</option>
+            {categories.map((category) => (
+              <option value={category}>{category}</option>
+            ))}
+          </select>
+          <svg
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
       </div>
 
-      <!-- Project header -->
-      <header class="mb-10">
-        <div class="mb-4 flex items-center gap-3 flex-wrap">
-          {project.data.categories && project.data.categories.length > 0 && (
-            ---
-            import Layout from "../../layouts/Layout.astro";
-            import ProjectCard from "../../components/ProjectCard.astro";
-            import ProjectModal from "../../components/ProjectModal.astro";
-            import { getCollection } from "astro:content";
+      <!-- Results Count (hidden by default, shown when filtering) -->
+      <div id="results-count" class="text-sm text-text-secondary hidden">
+        Showing <span id="results-number">0</span> project <span id="results-label"></span>.
+      </div>
 
-            export const prerender = true;
+      <!-- Projects List -->
+      <div id="projects-container" class="flex flex-col gap-6">
+        {
+          sortedProjects.map((project) => (
+            <div
+              class="project-item"
+              data-title={project.data.title.toLowerCase()}
+              data-description={project.data.description.toLowerCase()}
+              data-categories={project.data.categories ? JSON.stringify(project.data.categories) : "[]"}
+            >
+              <ProjectCard
+                slug={project.slug}
+                title={project.data.title}
+                description={project.data.description}
+                status={project.data.status}
+                technologies={project.data.technologies}
+                categories={project.data.categories ?? []}
+                featured={project.data.featured}
+                githubUrl={project.data.githubUrl}
+                liveUrl={project.data.liveUrl}
+                imageUrl={project.data.imageUrl}
+                favicon={project.data.favicon}
+                achievements={project.data.achievements}
+                startDate={project.data.startDate.toISOString()}
+                endDate={project.data.endDate?.toISOString()}
+              />
+            </div>
+          ))
+        }
+      </div>
 
-            export async function getStaticPaths() {
-              const projects = await getCollection("projects");
-              return projects
-                .filter((p) => !p.data.draft)
-                .map((p) => ({ params: { slug: p.slug }, props: { project: p } }));
+      <!-- No Results Message -->
+      <div id="no-results" class="hidden text-center py-12">
+        <p class="text-text-secondary text-lg">No projects found matching your search.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Project Modals -->
+  {
+    sortedProjects.map((project) => (
+      <ProjectModal project={project} isOpen={false} />
+    ))
+  }
+
+  <script>
+    (function () {
+      const searchInput = document.getElementById("project-search");
+      const categoryFilter = document.getElementById("category-filter");
+      const projectsContainer = document.getElementById("projects-container");
+      const projectItems = document.querySelectorAll(".project-item");
+      const resultsCount = document.getElementById("results-count");
+      const resultsNumber = document.getElementById("results-number");
+      const resultsLabel = document.getElementById("results-label");
+      const noResults = document.getElementById("no-results");
+
+      function filterProjects() {
+        if (
+          !searchInput ||
+          !categoryFilter ||
+          !projectsContainer ||
+          !resultsCount ||
+          !resultsNumber ||
+          !resultsLabel ||
+          !noResults
+        ) {
+          return;
+        }
+        const searchInputElement = searchInput as HTMLInputElement;
+        const categoryFilterElement = categoryFilter as HTMLSelectElement;
+        const searchTerm = searchInputElement.value.toLowerCase().trim();
+        const selectedCategory = categoryFilterElement.value;
+        let visibleCount = 0;
+
+        projectItems.forEach((item) => {
+          const itemElement = item as HTMLElement;
+          const title = itemElement.dataset.title || "";
+          const description = itemElement.dataset.description || "";
+          const categoriesJson = itemElement.dataset.categories || "[]";
+          let projectCategories: string[] = [];
+          try {
+            projectCategories = JSON.parse(categoriesJson);
+          } catch (e) {
+            // Fallback to empty array if parsing fails
+            projectCategories = [];
+          }
+
+          const matchesSearch =
+            !searchTerm ||
+            title.includes(searchTerm) ||
+            description.includes(searchTerm);
+          const matchesCategory =
+            !selectedCategory || projectCategories.includes(selectedCategory);
+
+          if (matchesSearch && matchesCategory) {
+            itemElement.style.display = "";
+            visibleCount++;
+          } else {
+            itemElement.style.display = "none";
+          }
+        });
+
+        // Update results count
+        if (searchTerm || selectedCategory) {
+          resultsCount.classList.remove("hidden");
+          resultsNumber.textContent = String(visibleCount);
+          resultsLabel.textContent = visibleCount === 1 ? "result" : "results";
+        } else {
+          resultsCount.classList.add("hidden");
+        }
+
+        // Show/hide no results message
+        if (visibleCount === 0 && (searchTerm || selectedCategory)) {
+          noResults.classList.remove("hidden");
+          projectsContainer.classList.add("hidden");
+        } else {
+          noResults.classList.add("hidden");
+          projectsContainer.classList.remove("hidden");
+        }
+      }
+
+      searchInput?.addEventListener("input", filterProjects);
+      categoryFilter?.addEventListener("change", filterProjects);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      const modals = Array.from(
+        document.querySelectorAll("[data-project-modal]")
+      ) as HTMLElement[];
+      const html = document.documentElement;
+      const body = document.body;
+      let activeModal: HTMLElement | null = null;
+      let scrollY = 0;
+
+      const setOpen = (modal: HTMLElement, open: boolean) => {
+        modal.dataset.open = open ? "true" : "false";
+        modal.setAttribute("aria-hidden", open ? "false" : "true");
+        const projectsContent = document.getElementById("projects-content");
+        if (open) {
+          scrollY = window.scrollY;
+          html.classList.add("modal-open");
+          body.classList.add("modal-open");
+          body.style.top = `-${scrollY}px`;
+          if (projectsContent) {
+            projectsContent.classList.add("blur-md", "pointer-events-none");
+          }
+        } else if (!activeModal) {
+          html.classList.remove("modal-open");
+          body.classList.remove("modal-open");
+          body.style.top = "";
+          window.scrollTo(0, scrollY);
+          if (projectsContent) {
+            projectsContent.classList.remove("blur-md", "pointer-events-none");
+          }
+        }
+      };
+
+      const closeActiveModal = () => {
+        if (!activeModal) return;
+        const modalToClose = activeModal;
+        const panel = modalToClose.querySelector("[data-modal-panel]") as HTMLElement | null;
+        let done = false;
+
+        const finishClose = () => {
+          if (done) return;
+          done = true;
+          modalToClose.removeEventListener("transitionend", onTransitionEnd);
+          modalToClose.dataset.open = "false";
+          modalToClose.removeAttribute("data-closing");
+          modalToClose.setAttribute("aria-hidden", "true");
+          activeModal = null;
+          html.classList.remove("modal-open");
+          body.classList.remove("modal-open");
+          body.style.top = "";
+          window.scrollTo(0, scrollY);
+          const projectsContent = document.getElementById("projects-content");
+          if (projectsContent) {
+            projectsContent.classList.remove("blur-md", "pointer-events-none");
+          }
+        };
+
+        const onTransitionEnd = (e: TransitionEvent) => {
+          if (e.target === panel && (e.propertyName === "opacity" || e.propertyName === "transform")) {
+            finishClose();
+          }
+        };
+
+        modalToClose.dataset.closing = "true";
+        panel?.addEventListener("transitionend", onTransitionEnd);
+        // Fallback if transitionend doesn't fire (e.g. reduced motion)
+        setTimeout(finishClose, 320);
+        // If the URL is the modal shareable URL, navigate history back if possible,
+        // otherwise replace to the base projects path so the URL and UI stay in sync.
+        try {
+          const currentPathMatch = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/);
+          if (currentPathMatch && currentPathMatch[1]) {
+            if (history.state && history.state.projectSlug === currentPathMatch[1]) {
+              history.back();
+            } else {
+              history.replaceState(null, "", "/projects");
             }
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
 
-            const allProjects = await getCollection("projects", ({ data }) => data.draft !== true);
+      (window as any).openProjectModal = (slug: string) => {
+        const modal = document.querySelector(
+          `[data-project-modal="${slug}"]`
+        ) as HTMLElement | null;
+        if (!modal) return;
 
-            // Sort projects same as main listing
-            const sortedProjects = allProjects.sort((a, b) => {
-              if (a.data.priority !== b.data.priority) {
-                return b.data.priority - a.data.priority;
-              }
-              return new Date(b.data.startDate).getTime() - new Date(a.data.startDate).getTime();
-            });
+        if (activeModal && activeModal !== modal) {
+          setOpen(activeModal, false);
+        }
 
-            // Get unique categories
-            const categorySet = new Set<string>();
-            sortedProjects.forEach((p) => {
-              if (p.data.categories && Array.isArray(p.data.categories)) {
-                p.data.categories.forEach((cat) => {
-                  if (cat && typeof cat === "string" && cat.trim() !== "") {
-                    categorySet.add(cat);
-                  }
-                });
-              }
-            });
-            const categories = Array.from(categorySet).sort();
+        activeModal = modal;
+        setOpen(modal, true);
+      };
 
-            const { slug } = Astro.params;
-            ---
+      // Open modal if URL path indicates a modal route (/projects/:slug)
+      const checkOpenFromPath = () => {
+        try {
+          const m = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/);
+          if (m && m[1]) {
+            (window as any).openProjectModal(m[1]);
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
 
-            <Layout title="Projects" description="">
-              <section id="projects">
-                <div class="h-full w-full flex flex-col gap-6">
-                  <!-- Page Header -->
-                  <section class="">
-                    <h1 class="text-4xl font-bold text-text-primary">Projects</h1>
-                  </section>
+      // Listen to history navigation to open/close modal appropriately
+      window.addEventListener("popstate", () => {
+        // If location matches modal path, open; otherwise close any open modal
+        const m = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/);
+        if (m && m[1]) {
+          (window as any).openProjectModal(m[1]);
+        } else {
+          // close active modal if any
+          if (activeModal) {
+            // call existing close logic
+            const evt = new KeyboardEvent("keydown", { key: "Escape" });
+            document.dispatchEvent(evt);
+          }
+        }
+      });
 
-                  <!-- Search and Filter Controls (same as index) -->
-                  <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-                    <div class="flex-1 relative">
-                      <input
-                        type="text"
-                        id="project-search"
-                        placeholder="Search projects..."
-                        class="bg-bg-card px-4 py-2.5 w-full rounded-lg text-text-primary placeholder-text-secondary border border-border-tertiary focus:ring-1 focus:ring-accent-primary focus:outline-none focus:border-accent-primary"
-                      />
-                      <svg
-                        class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary pointer-events-none"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
-                    </div>
+      // On initial load, check if URL should open a modal
+      checkOpenFromPath();
 
-                    <div class="relative sm:w-64">
-                      <select
-                        id="category-filter"
-                        class="w-full px-4 py-2.5 bg-bg-card rounded-lg text-text-primary border border-border-tertiary focus:ring-1 focus:ring-accent-primary focus:outline-none focus:border-accent-primary appearance-none cursor-pointer"
-                      >
-                        <option value="">All Categories</option>
-                        {categories.map((category) => (
-                          <option value={category}>{category}</option>
-                        ))}
-                      </select>
-                      <svg
-                        class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary pointer-events-none"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
+      modals.forEach((modal) => {
+        const closeBtn = modal.querySelector(
+          "[data-modal-close]"
+        ) as HTMLElement | null;
+        const backdrop = modal.querySelector(
+          "[data-modal-backdrop]"
+        ) as HTMLElement | null;
 
-                  <div id="results-count" class="text-sm text-text-secondary hidden">
-                    Showing <span id="results-number">0</span> project <span id="results-label"></span>.
-                  </div>
+        closeBtn?.addEventListener("click", () => {
+          if (activeModal === modal) {
+            closeActiveModal();
+          } else {
+            setOpen(modal, false);
+          }
+        });
 
-                  <div id="projects-container" class="flex flex-col gap-6">
-                    {
-                      sortedProjects.map((project) => (
-                        <div
-                          class="project-item"
-                          data-title={project.data.title.toLowerCase()}
-                          data-description={project.data.description.toLowerCase()}
-                          data-categories={project.data.categories ? JSON.stringify(project.data.categories) : "[]"}
-                        >
-                          <ProjectCard
-                            slug={project.slug}
-                            title={project.data.title}
-                            description={project.data.description}
-                            status={project.data.status}
-                            technologies={project.data.technologies}
-                            categories={project.data.categories ?? []}
-                            featured={project.data.featured}
-                            githubUrl={project.data.githubUrl}
-                            liveUrl={project.data.liveUrl}
-                            imageUrl={project.data.imageUrl}
-                            favicon={project.data.favicon}
-                            achievements={project.data.achievements}
-                            startDate={project.data.startDate.toISOString()}
-                            endDate={project.data.endDate?.toISOString()}
-                          />
-                        </div>
-                      ))
-                    }
-                  </div>
+        backdrop?.addEventListener("click", () => {
+          if (activeModal === modal) {
+            closeActiveModal();
+          } else {
+            setOpen(modal, false);
+          }
+        });
+      });
 
-                  <div id="no-results" class="hidden text-center py-12">
-                    <p class="text-text-secondary text-lg">No projects found matching your search.</p>
-                  </div>
-                </div>
-              </section>
-
-              <!-- Project Modals: open the requested one from URL -->
-              {
-                sortedProjects.map((project) => (
-                  <ProjectModal project={project} isOpen={project.slug === slug} />
-                ))
-              }
-
-              <script>
-                (function () {
-                  const searchInput = document.getElementById("project-search");
-                  const categoryFilter = document.getElementById("category-filter");
-                  const projectsContainer = document.getElementById("projects-container");
-                  const projectItems = document.querySelectorAll(".project-item");
-                  const resultsCount = document.getElementById("results-count");
-                  const resultsNumber = document.getElementById("results-number");
-                  const resultsLabel = document.getElementById("results-label");
-                  const noResults = document.getElementById("no-results");
-
-                  function filterProjects() {
-                    if (
-                      !searchInput ||
-                      !categoryFilter ||
-                      !projectsContainer ||
-                      !resultsCount ||
-                      !resultsNumber ||
-                      !resultsLabel ||
-                      !noResults
-                    ) {
-                      return;
-                    }
-                    const searchInputElement = searchInput as HTMLInputElement;
-                    const categoryFilterElement = categoryFilter as HTMLSelectElement;
-                    const searchTerm = searchInputElement.value.toLowerCase().trim();
-                    const selectedCategory = categoryFilterElement.value;
-                    let visibleCount = 0;
-
-                    projectItems.forEach((item) => {
-                      const itemElement = item as HTMLElement;
-                      const title = itemElement.dataset.title || "";
-                      const description = itemElement.dataset.description || "";
-                      const categoriesJson = itemElement.dataset.categories || "[]";
-                      let projectCategories: string[] = [];
-                      try {
-                        projectCategories = JSON.parse(categoriesJson);
-                      } catch (e) {
-                        projectCategories = [];
-                      }
-
-                      const matchesSearch =
-                        !searchTerm ||
-                        title.includes(searchTerm) ||
-                        description.includes(searchTerm);
-                      const matchesCategory =
-                        !selectedCategory || projectCategories.includes(selectedCategory);
-
-                      if (matchesSearch && matchesCategory) {
-                        itemElement.style.display = "";
-                        visibleCount++;
-                      } else {
-                        itemElement.style.display = "none";
-                      }
-                    });
-
-                    if (searchTerm || selectedCategory) {
-                      resultsCount.classList.remove("hidden");
-                      resultsNumber.textContent = String(visibleCount);
-                      resultsLabel.textContent = visibleCount === 1 ? "result" : "results";
-                    } else {
-                      resultsCount.classList.add("hidden");
-                    }
-
-                    if (visibleCount === 0 && (searchTerm || selectedCategory)) {
-                      noResults.classList.remove("hidden");
-                      projectsContainer.classList.add("hidden");
-                    } else {
-                      noResults.classList.add("hidden");
-                      projectsContainer.classList.remove("hidden");
-                    }
-                  }
-
-                  searchInput?.addEventListener("input", filterProjects);
-                  categoryFilter?.addEventListener("change", filterProjects);
-                })();
-              </script>
-
-              <script>
-                (function () {
-                  const modals = Array.from(
-                    document.querySelectorAll("[data-project-modal]")
-                  ) as HTMLElement[];
-                  const html = document.documentElement;
-                  const body = document.body;
-                  let activeModal: HTMLElement | null = null;
-                  let scrollY = 0;
-
-                  const setOpen = (modal: HTMLElement, open: boolean) => {
-                    modal.dataset.open = open ? "true" : "false";
-                    modal.setAttribute("aria-hidden", open ? "false" : "true");
-                    if (open) {
-                      scrollY = window.scrollY;
-                      html.classList.add("modal-open");
-                      body.classList.add("modal-open");
-                      body.style.top = `-${scrollY}px`;
-                    } else if (!activeModal) {
-                      html.classList.remove("modal-open");
-                      body.classList.remove("modal-open");
-                      body.style.top = "";
-                      window.scrollTo(0, scrollY);
-                    }
-                  };
-
-                  const closeActiveModal = () => {
-                    if (!activeModal) return;
-                    const modalToClose = activeModal;
-                    const panel = modalToClose.querySelector("[data-modal-panel]") as HTMLElement | null;
-                    let done = false;
-
-                    const finishClose = () => {
-                      if (done) return;
-                      done = true;
-                      modalToClose.removeEventListener("transitionend", onTransitionEnd);
-                      modalToClose.dataset.open = "false";
-                      modalToClose.removeAttribute("data-closing");
-                      modalToClose.setAttribute("aria-hidden", "true");
-                      activeModal = null;
-                      html.classList.remove("modal-open");
-                      body.classList.remove("modal-open");
-                      body.style.top = "";
-                      window.scrollTo(0, scrollY);
-                    };
-
-                    const onTransitionEnd = (e: TransitionEvent) => {
-                      if (e.target === panel && (e.propertyName === "opacity" || e.propertyName === "transform")) {
-                        finishClose();
-                      }
-                    };
-
-                    modalToClose.dataset.closing = "true";
-                    panel?.addEventListener("transitionend", onTransitionEnd);
-                    setTimeout(finishClose, 320);
-                  };
-
-                  (window as any).openProjectModal = (slug: string) => {
-                    const modal = document.querySelector(
-                      `[data-project-modal="${slug}"]`
-                    ) as HTMLElement | null;
-                    if (!modal) return;
-
-                    if (activeModal && activeModal !== modal) {
-                      setOpen(activeModal, false);
-                    }
-
-                    activeModal = modal;
-                    setOpen(modal, true);
-                  };
-
-                  // Open modal if URL path indicates a modal route (/projects/:slug)
-                  const checkOpenFromPath = () => {
-                    try {
-                      const m = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/);
-                      if (m && m[1]) {
-                        (window as any).openProjectModal(m[1]);
-                      }
-                    } catch (e) {
-                      // ignore
-                    }
-                  };
-
-                  // Listen to history navigation to open/close modal appropriately
-                  window.addEventListener("popstate", (ev) => {
-                    const m = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/);
-                    if (m && m[1]) {
-                      (window as any).openProjectModal(m[1]);
-                    } else {
-                      if (activeModal) {
-                        const evt = new KeyboardEvent("keydown", { key: "Escape" });
-                        document.dispatchEvent(evt);
-                      }
-                    }
-                  });
-
-                  // On initial load, check if URL should open a modal
-                  checkOpenFromPath();
-
-                  modals.forEach((modal) => {
-                    const closeBtn = modal.querySelector(
-                      "[data-modal-close]"
-                    ) as HTMLElement | null;
-                    const backdrop = modal.querySelector(
-                      "[data-modal-backdrop]"
-                    ) as HTMLElement | null;
-
-                    closeBtn?.addEventListener("click", () => {
-                      if (activeModal === modal) {
-                        closeActiveModal();
-                      } else {
-                        setOpen(modal, false);
-                      }
-                    });
-
-                    backdrop?.addEventListener("click", () => {
-                      if (activeModal === modal) {
-                        closeActiveModal();
-                      } else {
-                        setOpen(modal, false);
-                      }
-                    });
-                  });
-
-                  document.addEventListener("keydown", (event) => {
-                    if (event.key === "Escape") {
-                      closeActiveModal();
-                    }
-                  });
-                })();
-              </script>
-            </Layout>
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closeActiveModal();
+        }
+      });
+    })();
+  </script>
+</Layout>

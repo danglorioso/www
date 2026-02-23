@@ -47,11 +47,6 @@ const statusConfig = {
   },
 };
 
-const getStatusStyle = (status: string) => {
-  const s = statusConfig[status as keyof typeof statusConfig] || statusConfig["in-progress"];
-  return `${s.bg} ${s.text} ${s.border}`;
-};
-
 const currentStatus = statusConfig[project.data.status as keyof typeof statusConfig] || statusConfig["in-progress"];
 ---
 
@@ -59,7 +54,7 @@ const currentStatus = statusConfig[project.data.status as keyof typeof statusCon
   id={`project-modal-${project.slug}`}
   data-project-modal={project.slug}
   data-open={isOpen ? "true" : "false"}
-  class="project-modal fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300"
+  class="project-modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none invisible transition-opacity duration-300"
   role="dialog"
   aria-modal="true"
   aria-labelledby={`modal-title-${project.slug}`}
@@ -68,14 +63,14 @@ const currentStatus = statusConfig[project.data.status as keyof typeof statusCon
   <!-- Backdrop: dim overlay + blur so content behind is never readable -->
   <div
     data-modal-backdrop
-    class="absolute inset-0 bg-black/20 backdrop-blur-sm"
+    class="absolute inset-0 bg-transparent transition-all duration-0 ease-out"
     aria-hidden="true"
   ></div>
 
   <!-- Modal Container -->
   <div
     data-modal-panel
-    class="relative w-full max-w-5xl max-h-[80vh] sm:max-h-[75vh] bg-bg-primary border border-border-primary rounded-lg shadow-2xl overflow-hidden flex flex-col transform transition-opacity duration-300 mt-8 md:mt-0"
+    class="relative w-full max-w-5xl max-h-[80vh] sm:max-h-[75vh] bg-bg-primary border border-border-primary rounded-lg shadow-2xl overflow-hidden flex flex-col opacity-0 scale-95 translate-y-4 transition-all duration-500 ease-out mt-8 md:mt-0"
   >
     <!-- Header with Close Button -->
     <div class="flex items-center justify-between p-4 md:p-6 border-b border-border-secondary flex-shrink-0">
@@ -130,7 +125,7 @@ const currentStatus = statusConfig[project.data.status as keyof typeof statusCon
     </div>
 
     <!-- Scrollable Content -->
-    <div class="overflow-y-auto flex-1 p-6 md:p-8" data-modal-scroll>
+    <div class="overflow-y-auto flex-1 p-6 md:p-8 scrollbar-hide" data-modal-scroll>
       <!-- Categories and Status -->
       <!-- <div class="mb-6 flex items-center gap-2 flex-wrap">
         {project.data.categories && project.data.categories.length > 0 && (
@@ -306,65 +301,33 @@ const currentStatus = statusConfig[project.data.status as keyof typeof statusCon
 </div>
 
 <style>
-  .project-modal {
-    opacity: 0;
-    pointer-events: none;
-    visibility: hidden;
-    transition: opacity 300ms ease-out;
-  }
-
-  /* When opening: no transition so backdrop + blur appear immediately */
+  /* State-based modal animations */
   .project-modal[data-open="true"] {
-    opacity: 1;
-    pointer-events: auto;
-    visibility: visible;
-    transition-duration: 0ms;
+    @apply opacity-100 pointer-events-auto visible duration-0;
   }
 
-  .project-modal [data-modal-backdrop] {
-    transition: backdrop-filter 0ms ease-out, background-color 0ms ease-out;
-  }
-
-  .project-modal[data-open="false"] [data-modal-backdrop] {
-    backdrop-filter: none;
-    background-color: transparent;
-  }
-
-  /* Promote backdrop to own layer so blur applies immediately when modal opens */
   .project-modal[data-open="true"] [data-modal-backdrop] {
-    transform: translateZ(0);
-    backdrop-filter: blur(4px);
-    background-color: rgba(0, 0, 0, 0.2);
-  }
-
-  .project-modal [data-modal-panel] {
-    opacity: 0;
-    transform: scale(0.95) translateY(1rem);
-    transition: opacity 100ms ease-out, transform 500ms ease-out;
+    /* @apply bg-black/40; */
   }
 
   .project-modal[data-open="true"] [data-modal-panel] {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    transition: opacity 100ms ease-out, transform 500ms ease-out;
+    @apply opacity-100 scale-100 translate-y-0;
   }
 
-  /* Closing: panel animates out (mirror of open), then overlay fades */
+  /* Closing state animations */
   .project-modal[data-closing="true"] {
-    transition: opacity 300ms ease-out;
-    pointer-events: none;
+    @apply transition-opacity duration-300 ease-out pointer-events-none;
   }
 
   .project-modal[data-open="true"][data-closing="true"] {
-    opacity: 0;
+    @apply opacity-0;
   }
 
   .project-modal[data-closing="true"] [data-modal-panel] {
-    opacity: 0;
-    transform: scale(0.95) translateY(1rem);
+    @apply opacity-0 scale-95 translate-y-4;
   }
 
-  /* Smooth scrolling for modal content */
+  /* Scrollbar styling */
   .project-modal [data-modal-scroll] {
     scrollbar-width: thin;
     scrollbar-color: var(--border-tertiary) transparent;
@@ -387,23 +350,18 @@ const currentStatus = statusConfig[project.data.status as keyof typeof statusCon
     background-color: var(--border-secondary);
   }
 
-  /* Prevent page scroll when modal is open (html + body for all browsers) */
+  /* Prevent page scroll when modal is open */
   html.modal-open {
-    overflow: hidden;
+    @apply overflow-hidden;
   }
 
   body.modal-open {
-    overflow: hidden;
-    position: fixed;
-    left: 0;
-    right: 0;
-    /* top is set via inline style in JS so scroll position is preserved */
+    @apply overflow-hidden fixed left-0 right-0;
   }
 
   /* Enhanced link hover effects */
   .prose a {
-    position: relative;
-    transition: all 0.3s ease;
+    @apply relative transition-all duration-300;
   }
 
   .prose a::after {
