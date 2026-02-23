@@ -259,7 +259,7 @@ const categories = Array.from(categorySet).sort();
           body.classList.add("modal-open");
           body.style.top = `-${scrollY}px`;
           if (projectsContent) {
-            projectsContent.classList.add("blur-md", "pointer-events-none");
+            projectsContent.classList.add("blur-sm", "pointer-events-none");
           }
         } else if (!activeModal) {
           html.classList.remove("modal-open");
@@ -267,7 +267,7 @@ const categories = Array.from(categorySet).sort();
           body.style.top = "";
           window.scrollTo(0, scrollY);
           if (projectsContent) {
-            projectsContent.classList.remove("blur-md", "pointer-events-none");
+            projectsContent.classList.remove("blur-sm", "pointer-events-none");
           }
         }
       };
@@ -290,10 +290,6 @@ const categories = Array.from(categorySet).sort();
           body.classList.remove("modal-open");
           body.style.top = "";
           window.scrollTo(0, scrollY);
-          const projectsContent = document.getElementById("projects-content");
-          if (projectsContent) {
-            projectsContent.classList.remove("blur-md", "pointer-events-none");
-          }
         };
 
         const onTransitionEnd = (e: TransitionEvent) => {
@@ -301,6 +297,12 @@ const categories = Array.from(categorySet).sort();
             finishClose();
           }
         };
+
+        // Remove blur immediately so it fades out during modal close animation
+        const projectsContent = document.getElementById("projects-content");
+        if (projectsContent) {
+          projectsContent.classList.remove("blur-sm", "pointer-events-none");
+        }
 
         modalToClose.dataset.closing = "true";
         panel?.addEventListener("transitionend", onTransitionEnd);
