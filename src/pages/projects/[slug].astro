@@ -46,11 +46,17 @@ sortedProjects.forEach((p) => {
   }
 });
 const categories = Array.from(categorySet).sort();
+
+// Get the current slug from the URL
+const { slug } = Astro.params;
 ---
 
 <Layout title="Projects" description="">
   <section id="projects">
-    <div id="projects-content" class="h-full w-full flex flex-col gap-6 transition-all duration-300">
+    <div
+      id="projects-content"
+      class={`h-full w-full flex flex-col gap-6 transition-all duration-300 ${slug ? "blur-sm pointer-events-none" : ""}`}
+    >
       <!-- Page Header -->
       <section class="">
         <h1 class="text-4xl font-bold text-text-primary">Projects</h1>
@@ -154,9 +160,20 @@ const categories = Array.from(categorySet).sort();
   <!-- Project Modals -->
   {
     sortedProjects.map((project) => (
-      <ProjectModal project={project} isOpen={false} />
+      <ProjectModal project={project} isOpen={project.slug === slug} />
     ))
   }
+
+  <script>
+    // Immediately set modal-open state on page load to prevent scroll
+    (function() {
+      const html = document.documentElement;
+      const body = document.body;
+      html.classList.add("modal-open");
+      body.classList.add("modal-open");
+      body.style.top = "0px";
+    })();
+  </script>
 
   <script>
     (function () {
@@ -298,7 +315,7 @@ const categories = Array.from(categorySet).sort();
           }
         };
 
-        // Remove blur immediately so it fades out during modal close animation
+        // Remove blur immediately so it transitions during modal close animation
         const projectsContent = document.getElementById("projects-content");
         if (projectsContent) {
           projectsContent.classList.remove("blur-sm", "pointer-events-none");
