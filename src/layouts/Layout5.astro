@@ -24,10 +24,12 @@ const { title, description } = Astro.props;
   </head>
 
   <body class="min-h-screen">
+    <!-- Static background layer -->
+    <div class="fixed inset-0 -z-20 pointer-events-none site-bg"></div>
+
     <canvas
       id="constellation-canvas"
-      class="fixed top-0 left-0 w-full h-full pointer-events-none"
-      style="background: var(--bg-primary, #0f172a);"></canvas>
+      class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10"></canvas>
 
     <!-- Vercel Speed Insights -->
     <SpeedInsights />
@@ -102,7 +104,6 @@ const { title, description } = Astro.props;
         constructor() {
           this.canvas = document.getElementById("constellation-canvas");
           this.ctx = this.canvas.getContext("2d");
-          this.bgColor = this.getBackgroundColor();
           this.stars = [];
           this.shootingStars = [];
           this.time = 0;
@@ -111,13 +112,6 @@ const { title, description } = Astro.props;
           this.createStars();
           this.bindEvents();
           this.animate();
-        }
-
-        getBackgroundColor() {
-          const bgColor = getComputedStyle(document.documentElement)
-            .getPropertyValue("--bg-primary")
-            .trim();
-          return bgColor || "#0f172a";
         }
 
         getAccentColor() {
@@ -305,8 +299,8 @@ const { title, description } = Astro.props;
         }
 
         animate() {
-          this.ctx.fillStyle = this.bgColor;
-          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          // Clear canvas (transparent to show CSS background)
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
           this.update();
           this.drawStars();
@@ -385,6 +379,61 @@ const { title, description } = Astro.props;
   body {
     background: var(--bg-primary);
     min-height: 100vh;
+  }
+
+  .site-bg {
+    background:
+      radial-gradient(
+        900px 600px at 15% 10%,
+        rgba(148, 163, 184, 0.11),
+        transparent 60%
+      ),
+      radial-gradient(
+        800px 520px at 85% 25%,
+        color-mix(in oklab, var(--accent-secondary, var(--accent-primary)) 26%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        900px 700px at 55% 110%,
+        rgba(148, 163, 184, 0.16),
+        transparent 60%
+      ),
+      
+  }
+
+  .site-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to right, rgba(148, 163, 184, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(circle at 50% 35%, black 0%, transparent 70%);
+    opacity: 0.8;
+  }
+
+  .site-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.018) 0px,
+        rgba(255, 255, 255, 0.018) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      radial-gradient(
+        1200px 900px at 50% 40%,
+        transparent 0%,
+        rgba(0, 0, 0, 0.45) 78%,
+        rgba(0, 0, 0, 0.7) 100%
+      );
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+    pointer-events: none;
   }
 
   /* Text selection highlight color */
