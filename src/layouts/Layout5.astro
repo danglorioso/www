@@ -7,8 +7,9 @@ import Footer from "../components/Footer";
 interface Props {
   title: string;
   description?: string;
+  homepage?: boolean;
 }
-const { title, description } = Astro.props;
+const { title, description, homepage } = Astro.props;
 ---
 
 <!doctype html>
@@ -97,6 +98,9 @@ const { title, description } = Astro.props;
           d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
       </svg>
     </button>
+
+    <!-- Vercel Speed Insights -->
+    <SpeedInsights />
 
     <script is:inline>
       // Constellation-style starfield background
