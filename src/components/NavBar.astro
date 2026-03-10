@@ -35,7 +35,7 @@ const isActive = (href: string) => {
           <li>
             <a
               href={item.href}
-              class={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+              class={`relative z-10 items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                 active
                   ? "text-text-primary"
                   : "text-text-secondary hover:text-text-primary"
@@ -89,13 +89,6 @@ const isActive = (href: string) => {
         highlight.style.opacity = "0";
       });
 
-      // Initialize on active item, if any
-      const activeItem = Array.from(items).find(
-        (item) => item.dataset.navActive === "true",
-      );
-      if (activeItem) {
-        moveHighlightTo(activeItem);
-      }
     };
 
     if (document.readyState === "loading") {
