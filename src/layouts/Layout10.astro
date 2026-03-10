@@ -1,0 +1,419 @@
+---
+import "../globals.css";
+import SpeedInsights from "@vercel/speed-insights/astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="512x512" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | Dan Glorioso</title>
+  </head>
+
+  <body class="min-h-screen">
+    <canvas
+      id="terrain-canvas"
+      class="fixed top-0 left-0 w-full h-full pointer-events-none"
+      style="background: var(--bg-primary, #0f172a);"></canvas>
+
+    <!-- Vercel Speed Insights -->
+    <SpeedInsights />
+
+    <div class="flex flex-col gap-4">
+      <!-- Header -->
+      <Header />
+
+      <!-- Header spacer to prevent content from being hidden behind fixed header -->
+      <div class="h-20 sm:h-22"></div>
+
+      <!-- Mobile Menu (slides from behind header) -->
+      <div
+        id="mobile-menu"
+        class="md:hidden fixed left-0 right-0 z-40 transform -translate-y-full transition-all duration-300 ease-in-out pointer-events-none"
+        aria-hidden="true"
+      >
+        <!-- Full Screen Backdrop -->
+        <div
+          class="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+          id="mobile-menu-backdrop"
+        >
+        </div>
+
+        <!-- Menu Panel that slides from behind header -->
+        <div
+          class="relative z-40 bg-slate-900 border-b border-slate-700/50 shadow-2xl pt-20"
+        >
+          <!-- Navigation Links -->
+          <nav class="px-6 py-6">
+            <ul class="space-y-2" id="mobile-nav-links">
+              <!-- Navigation items will be populated by JavaScript -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Page Content -->
+      <main
+        class="flex flex-col max-w-5xl px-8 md:px-16 py-8 mx-auto w-full relative z-0"
+      >
+        <slot />
+      </main>
+
+      <!-- Footer -->
+      <Footer />
+    </div>
+
+    <!-- Back to Top Button -->
+    <button
+      id="back-to-top"
+      class="fixed bottom-6 right-6 p-3 z-[100] bg-slate-850/90 hover:bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-full shadow-lg transition-all duration-300 opacity-0 translate-y-2 pointer-events-none group"
+      aria-label="Back to top"
+    >
+      <svg
+        class="w-5 h-5 mx-auto text-gray-300 group-hover:text-white transition-colors duration-200"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+      </svg>
+    </button>
+
+    <script is:inline>
+      // Isometric wireframe terrain background (original)
+      class IsometricTerrain {
+        constructor() {
+          this.canvas = document.getElementById("terrain-canvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.bgColor = this.getBackgroundColor();
+          this.time = 0;
+          this.scrollY = 0;
+
+          this.resize();
+          this.bindEvents();
+          this.animate();
+        }
+
+        getBackgroundColor() {
+          const bgColor = getComputedStyle(document.documentElement)
+            .getPropertyValue("--bg-primary")
+            .trim();
+          return bgColor || "#0f172a";
+        }
+
+        getAccentColor() {
+          const accentColor =
+            getComputedStyle(document.documentElement)
+              .getPropertyValue("--accent-primary")
+              .trim() || "rgb(59, 130, 246)";
+
+          let r, g, b;
+          if (accentColor.startsWith("oklch")) {
+            r = 59;
+            g = 130;
+            b = 246;
+          } else if (accentColor.startsWith("#")) {
+            const hex = accentColor.slice(1);
+            r = parseInt(hex.slice(0, 2), 16);
+            g = parseInt(hex.slice(2, 4), 16);
+            b = parseInt(hex.slice(4, 6), 16);
+          } else if (accentColor.startsWith("rgb")) {
+            const matches = accentColor.match(/\d+/g);
+            r = parseInt(matches[0]);
+            g = parseInt(matches[1]);
+            b = parseInt(matches[2]);
+          } else {
+            r = 59;
+            g = 130;
+            b = 246;
+          }
+
+          return { r, g, b };
+        }
+
+        clamp(v, min, max) {
+          return Math.max(min, Math.min(max, v));
+        }
+
+        smoothstep(t) {
+          return t * t * (3 - 2 * t);
+        }
+
+        hash2(x, y) {
+          const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+          return s - Math.floor(s);
+        }
+
+        valueNoise2D(x, y) {
+          const xi = Math.floor(x);
+          const yi = Math.floor(y);
+          const xf = x - xi;
+          const yf = y - yi;
+
+          const a = this.hash2(xi, yi);
+          const b = this.hash2(xi + 1, yi);
+          const c = this.hash2(xi, yi + 1);
+          const d = this.hash2(xi + 1, yi + 1);
+
+          const u = this.smoothstep(xf);
+          const v = this.smoothstep(yf);
+
+          const x1 = a + (b - a) * u;
+          const x2 = c + (d - c) * u;
+          return x1 + (x2 - x1) * v;
+        }
+
+        fbm(x, y) {
+          let sum = 0;
+          let amp = 0.55;
+          let freq = 1;
+          for (let i = 0; i < 5; i++) {
+            sum += amp * (this.valueNoise2D(x * freq, y * freq) * 2 - 1);
+            freq *= 2;
+            amp *= 0.5;
+          }
+          return sum; // [-1, 1] approx
+        }
+
+        resize() {
+          const dpr = this.clamp(window.devicePixelRatio || 1, 1, 2);
+          this.dpr = dpr;
+          this.canvas.width = Math.floor(window.innerWidth * dpr);
+          this.canvas.height = Math.floor(window.innerHeight * dpr);
+          this.canvas.style.width = `${window.innerWidth}px`;
+          this.canvas.style.height = `${window.innerHeight}px`;
+          this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+          this.w = window.innerWidth;
+          this.h = window.innerHeight;
+
+          // Terrain settings scale with viewport
+          this.cell = Math.max(10, Math.min(18, Math.floor(this.w / 80)));
+          this.cols = Math.floor(this.w / this.cell) + 18;
+          this.rows = Math.floor(this.h / this.cell) + 18;
+          this.isoScale = this.cell;
+          this.heightScale = this.cell * 1.35;
+        }
+
+        bindEvents() {
+          window.addEventListener("resize", () => {
+            this.resize();
+          });
+
+          window.addEventListener(
+            "scroll",
+            () => {
+              this.scrollY = window.scrollY || 0;
+            },
+            { passive: true }
+          );
+        }
+
+        project(ix, iy, height) {
+          // Isometric projection
+          const x = (ix - iy) * this.isoScale;
+          const y = (ix + iy) * this.isoScale * 0.5 - height;
+          return { x, y };
+        }
+
+        drawBackgroundWash() {
+          // Base fill (matches theme)
+          this.ctx.fillStyle = this.bgColor;
+          this.ctx.fillRect(0, 0, this.w, this.h);
+
+          // Subtle vignette
+          const vignette = this.ctx.createRadialGradient(
+            this.w * 0.5,
+            this.h * 0.35,
+            this.w * 0.15,
+            this.w * 0.5,
+            this.h * 0.5,
+            this.w * 0.75
+          );
+          vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+          vignette.addColorStop(1, "rgba(0, 0, 0, 0.55)");
+          this.ctx.fillStyle = vignette;
+          this.ctx.fillRect(0, 0, this.w, this.h);
+        }
+
+        drawTerrain() {
+          const accent = this.getAccentColor();
+          const t = this.time;
+
+          const scrollParallax = (this.scrollY || 0) * 0.00025;
+          const nx = t * 0.00018 + scrollParallax;
+          const ny = -t * 0.00014;
+
+          // Center the isometric grid on screen
+          const originX = this.w * 0.5;
+          const originY = this.h * 0.62;
+
+          // Draw back-to-front so overlaps feel correct
+          this.ctx.lineWidth = 1;
+          this.ctx.lineJoin = "round";
+
+          for (let iy = 0; iy < this.rows; iy++) {
+            // Slightly fade with distance
+            const depthFade = 1 - iy / this.rows;
+            for (let ix = 0; ix < this.cols; ix++) {
+              const wx = (ix - this.cols * 0.5) * 0.12;
+              const wy = (iy - this.rows * 0.5) * 0.12;
+
+              const h1 = this.fbm(wx + nx, wy + ny);
+              const h2 = this.fbm(wx + 0.12 + nx, wy + ny);
+              const h3 = this.fbm(wx + nx, wy + 0.12 + ny);
+
+              const height = (h1 * 0.5 + 0.5) * this.heightScale;
+              const heightX = (h2 * 0.5 + 0.5) * this.heightScale;
+              const heightY = (h3 * 0.5 + 0.5) * this.heightScale;
+
+              const p = this.project(ix, iy, height);
+              const px = this.project(ix + 1, iy, heightX);
+              const py = this.project(ix, iy + 1, heightY);
+
+              const sx = originX + p.x;
+              const sy = originY + p.y;
+
+              const ax = originX + px.x;
+              const ay = originY + px.y;
+              const bx = originX + py.x;
+              const by = originY + py.y;
+
+              // Local slope affects brightness
+              const slope = Math.abs(heightX - height) + Math.abs(heightY - height);
+              const glow = this.clamp(0.12 + slope / (this.heightScale * 2.2), 0.12, 0.55);
+              const alpha = 0.03 + 0.08 * depthFade + glow * 0.06;
+
+              this.ctx.strokeStyle = `rgba(${accent.r}, ${accent.g}, ${accent.b}, ${alpha})`;
+
+              // Grid edges
+              this.ctx.beginPath();
+              this.ctx.moveTo(sx, sy);
+              this.ctx.lineTo(ax, ay);
+              this.ctx.stroke();
+
+              this.ctx.beginPath();
+              this.ctx.moveTo(sx, sy);
+              this.ctx.lineTo(bx, by);
+              this.ctx.stroke();
+
+              // Occasional "ridge spark"
+              if (glow > 0.38 && (ix + iy) % 23 === 0) {
+                const pulse = 0.55 + 0.45 * Math.sin(t * 0.002 + (ix + iy) * 0.9);
+                this.ctx.fillStyle = `rgba(255, 255, 255, ${0.02 + 0.06 * pulse * depthFade})`;
+                this.ctx.beginPath();
+                this.ctx.arc(sx, sy, 1.4, 0, Math.PI * 2);
+                this.ctx.fill();
+              }
+            }
+          }
+        }
+
+        animate() {
+          this.time += 16;
+
+          this.drawBackgroundWash();
+          this.drawTerrain();
+
+          requestAnimationFrame(() => this.animate());
+        }
+      }
+
+      // Back to Top Button Functionality
+      function initBackToTop() {
+        const backToTopBtn = document.getElementById("back-to-top");
+        if (!backToTopBtn) return;
+
+        function toggleButtonVisibility() {
+          const scrollTop =
+            window.pageYOffset || document.documentElement.scrollTop;
+
+          if (scrollTop > 300) {
+            backToTopBtn.classList.remove(
+              "opacity-0",
+              "translate-y-2",
+              "pointer-events-none"
+            );
+            backToTopBtn.classList.add("opacity-100", "translate-y-0");
+          } else {
+            backToTopBtn.classList.add(
+              "opacity-0",
+              "translate-y-2",
+              "pointer-events-none"
+            );
+            backToTopBtn.classList.remove("opacity-100", "translate-y-0");
+          }
+        }
+
+        function scrollToTop() {
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
+        }
+
+        window.addEventListener("scroll", toggleButtonVisibility);
+        backToTopBtn.addEventListener("click", scrollToTop);
+        toggleButtonVisibility();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          new IsometricTerrain();
+          initBackToTop();
+        });
+      } else {
+        new IsometricTerrain();
+        initBackToTop();
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    font-family:
+      -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--bg-primary);
+    min-height: 100vh;
+  }
+
+  /* Text selection highlight color */
+  ::selection {
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+  }
+
+  ::-moz-selection {
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+  }
+</style>

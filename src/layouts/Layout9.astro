@@ -1,0 +1,387 @@
+---
+import "../globals.css";
+import SpeedInsights from "@vercel/speed-insights/astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer";
+
+interface Props {
+  title: string;
+  description?: string;
+  homepage?: boolean;
+}
+const { title, description, homepage } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="512x512" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{homepage ? title : `${title} | Dan Glorioso`}</title>
+  </head>
+
+  <body class="min-h-screen flex flex-col">
+    <canvas
+      id="background-canvas"
+      class="fixed top-0 left-0 w-full h-full pointer-events-none"
+      style="background: var(--bg-primary, #0f172a);"></canvas>
+
+    <div class="flex flex-col gap-4 flex-1">
+      <!-- Header -->
+      <Header />
+
+      <!-- Header spacer to prevent content from being hidden behind fixed header -->
+      <div class="h-20 sm:h-22"></div>
+
+      <!-- Mobile Menu (slides from behind header) -->
+      <div
+        id="mobile-menu"
+        class="md:hidden fixed left-0 right-0 z-40 transform -translate-y-full transition-all duration-300 ease-in-out pointer-events-none"
+        aria-hidden="true"
+      >
+        <!-- Full Screen Backdrop -->
+        <div
+          class="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+          id="mobile-menu-backdrop"
+        >
+        </div>
+
+        <!-- Menu Panel that slides from behind header) -->
+        <div
+          class="relative z-40 bg-slate-900 border-b border-slate-700/50 shadow-2xl pt-20"
+        >
+          <!-- Navigation Links -->
+          <nav class="px-6 py-6">
+            <ul class="space-y-2" id="mobile-nav-links">
+              <!-- Navigation items will be populated by JavaScript -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Page Content -->
+      <main
+        class="flex-1 flex flex-col max-w-5xl px-8 md:px-16 py-8 mx-auto w-full relative z-0 page-fade-in"
+      >
+        <slot />
+      </main>
+
+      <!-- Footer -->
+      <Footer />
+    </div>
+
+    <!-- Back to Top Button -->
+    <button
+      id="back-to-top"
+      class="fixed bottom-6 right-6 p-3 z-[100] bg-slate-850/90 hover:bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-full shadow-lg transition-all duration-300 opacity-0 translate-y-2 pointer-events-none group"
+      aria-label="Back to top"
+    >
+      <svg
+        class="w-5 h-5 mx-auto text-gray-300 group-hover:text-white transition-colors duration-200"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+      </svg>
+    </button>
+
+    <!-- Vercel Speed Insights -->
+    <SpeedInsights />
+
+    <script is:inline>
+      class LittlePlanes {
+        constructor() {
+          this.canvas = document.getElementById("background-canvas");
+          this.ctx = this.canvas.getContext("2d");
+
+          // ── Config ───────────────────────────────────────────────
+          this.config = {
+            planeCount: 6,          // number of planes on screen at once
+            planeScale: 0.7,        // size multiplier (1 = ~22px wingspan)
+            planeOpacity: 0.12,     // overall opacity — keep low for subtlety
+            speedMin: 0.25,         // px per frame, slowest plane
+            speedMax: 0.65,         // px per frame, fastest plane
+            trailLength: 38,        // number of trail segments behind each plane
+            trailOpacity: 0.045,    // max trail opacity (fades to 0 at tail)
+            wanderStrength: 0.012,  // how much planes gently curve (0 = straight lines)
+            wanderSpeed: 0.018,     // how fast the wander oscillates
+          };
+          // ────────────────────────────────────────────────────────
+
+          this.bgColor = this.getBgColor();
+          this.bgRgb = this.colorToRgb(this.bgColor);
+          this.planes = [];
+
+          this.resize();
+          this.spawnPlanes();
+          this.bindEvents();
+          this.animate();
+        }
+
+        getBgColor() {
+          const c = getComputedStyle(document.documentElement)
+            .getPropertyValue("--bg-primary").trim();
+          return c || "#0f172a";
+        }
+
+        colorToRgb(color) {
+          if (!color) return [15, 23, 42];
+          if (color.startsWith("#")) {
+            let hex = color.replace(/^#/, "");
+            if (hex.length === 3) hex = hex.split("").map(h => h + h).join("");
+            const n = parseInt(hex, 16);
+            return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+          }
+          if (color.startsWith("rgb")) {
+            const m = color.match(/\d+/g);
+            return [parseInt(m[0]), parseInt(m[1]), parseInt(m[2])];
+          }
+          return [15, 23, 42];
+        }
+
+        resize() {
+          this.canvas.width = window.innerWidth;
+          this.canvas.height = window.innerHeight;
+        }
+
+        bindEvents() {
+          window.addEventListener("resize", () => {
+            this.resize();
+          });
+        }
+
+        // Spawn a single plane, optionally starting off-screen
+        spawnPlane(offscreen = false) {
+          const W = this.canvas.width;
+          const H = this.canvas.height;
+          const angle = Math.random() * Math.PI * 2;
+          const speed = this.config.speedMin +
+            Math.random() * (this.config.speedMax - this.config.speedMin);
+
+          let x, y;
+          if (offscreen) {
+            // Start just outside a random edge
+            const edge = Math.floor(Math.random() * 4);
+            if (edge === 0) { x = Math.random() * W; y = -40; }
+            else if (edge === 1) { x = W + 40; y = Math.random() * H; }
+            else if (edge === 2) { x = Math.random() * W; y = H + 40; }
+            else { x = -40; y = Math.random() * H; }
+          } else {
+            x = Math.random() * W;
+            y = Math.random() * H;
+          }
+
+          return {
+            x, y,
+            angle,           // current heading in radians
+            speed,
+            wanderOffset: Math.random() * Math.PI * 2,  // phase for wander
+            trail: [],       // array of {x, y} past positions
+            opacity: this.config.planeOpacity * (0.6 + Math.random() * 0.4),
+          };
+        }
+
+        spawnPlanes() {
+          this.planes = [];
+          for (let i = 0; i < this.config.planeCount; i++) {
+            this.planes.push(this.spawnPlane(false));
+          }
+        }
+
+        // Draw a top-down minimal plane silhouette centered at origin, pointing right (+x)
+        // Scale ~22px wingspan at scale=1
+        drawPlaneShape(ctx, scale, opacity) {
+          const s = scale;
+          ctx.fillStyle = `rgba(190, 215, 255, ${opacity})`;
+          ctx.strokeStyle = `rgba(190, 215, 255, ${opacity * 0.6})`;
+          ctx.lineWidth = 0.5;
+
+          ctx.beginPath();
+          // Fuselage — elongated teardrop
+          ctx.moveTo(11 * s, 0);                          // nose
+          ctx.bezierCurveTo(8*s, -1.2*s, -6*s, -1.5*s, -9*s, -0.5*s);
+          ctx.lineTo(-10*s, 0);
+          ctx.lineTo(-9*s, 0.5*s);
+          ctx.bezierCurveTo(-6*s, 1.5*s, 8*s, 1.2*s, 11*s, 0);
+          ctx.fill();
+
+          // Left wing
+          ctx.beginPath();
+          ctx.moveTo(2*s, 0);
+          ctx.bezierCurveTo(0, -1*s, -3*s, -9*s, -4*s, -11*s);
+          ctx.bezierCurveTo(-5*s, -11*s, -5*s, -10*s, -5*s, -9*s);
+          ctx.bezierCurveTo(-4*s, -7*s, -1*s, -2*s, 0, 0);
+          ctx.fill();
+
+          // Right wing (mirror)
+          ctx.beginPath();
+          ctx.moveTo(2*s, 0);
+          ctx.bezierCurveTo(0, 1*s, -3*s, 9*s, -4*s, 11*s);
+          ctx.bezierCurveTo(-5*s, 11*s, -5*s, 10*s, -5*s, 9*s);
+          ctx.bezierCurveTo(-4*s, 7*s, -1*s, 2*s, 0, 0);
+          ctx.fill();
+
+          // Left tail fin
+          ctx.beginPath();
+          ctx.moveTo(-7*s, 0);
+          ctx.bezierCurveTo(-8*s, -0.5*s, -9*s, -5*s, -10*s, -6*s);
+          ctx.bezierCurveTo(-10.5*s, -6*s, -10.5*s, -5.5*s, -10*s, -4.5*s);
+          ctx.bezierCurveTo(-9*s, -3*s, -8*s, -1*s, -7.5*s, 0);
+          ctx.fill();
+
+          // Right tail fin (mirror)
+          ctx.beginPath();
+          ctx.moveTo(-7*s, 0);
+          ctx.bezierCurveTo(-8*s, 0.5*s, -9*s, 5*s, -10*s, 6*s);
+          ctx.bezierCurveTo(-10.5*s, 6*s, -10.5*s, 5.5*s, -10*s, 4.5*s);
+          ctx.bezierCurveTo(-9*s, 3*s, -8*s, 1*s, -7.5*s, 0);
+          ctx.fill();
+        }
+
+        isOffScreen(p) {
+          const pad = 60;
+          return (
+            p.x < -pad || p.x > this.canvas.width + pad ||
+            p.y < -pad || p.y > this.canvas.height + pad
+          );
+        }
+
+        update(t) {
+          const { wanderStrength, wanderSpeed, trailLength, speedMin, speedMax } = this.config;
+
+          for (let i = 0; i < this.planes.length; i++) {
+            const p = this.planes[i];
+
+            // Gentle wander — slowly curves heading
+            p.angle += Math.sin(t * wanderSpeed + p.wanderOffset) * wanderStrength;
+
+            // Move forward
+            p.x += Math.cos(p.angle) * p.speed;
+            p.y += Math.sin(p.angle) * p.speed;
+
+            // Record trail
+            p.trail.push({ x: p.x, y: p.y });
+            if (p.trail.length > trailLength) p.trail.shift();
+
+            // Respawn when off-screen
+            if (this.isOffScreen(p)) {
+              this.planes[i] = this.spawnPlane(true);
+            }
+          }
+        }
+
+        draw() {
+          const ctx = this.ctx;
+          const { planeScale, trailOpacity } = this.config;
+          const [br, bg, bb] = this.bgRgb;
+
+          // Clear
+          ctx.fillStyle = `rgb(${br}, ${bg}, ${bb})`;
+          ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+          for (const p of this.planes) {
+            // Draw contrail
+            if (p.trail.length > 1) {
+              for (let i = 1; i < p.trail.length; i++) {
+                const frac = i / p.trail.length;           // 0 at tail, 1 at head
+                const op = frac * frac * trailOpacity;     // quadratic fade
+                const width = frac * 1.2;
+                ctx.beginPath();
+                ctx.moveTo(p.trail[i - 1].x, p.trail[i - 1].y);
+                ctx.lineTo(p.trail[i].x, p.trail[i].y);
+                ctx.strokeStyle = `rgba(200, 220, 255, ${op})`;
+                ctx.lineWidth = width;
+                ctx.lineCap = "round";
+                ctx.stroke();
+              }
+            }
+
+            // Draw plane
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.angle);
+            this.drawPlaneShape(ctx, planeScale, p.opacity);
+            ctx.restore();
+          }
+        }
+
+        animate() {
+          this.t = (this.t || 0) + 1;
+          this.update(this.t);
+          this.draw();
+          requestAnimationFrame(() => this.animate());
+        }
+      }
+
+      // Back to Top Button Functionality
+      function initBackToTop() {
+        const backToTopBtn = document.getElementById("back-to-top");
+        if (!backToTopBtn) return;
+
+        function toggleButtonVisibility() {
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          if (scrollTop > 300) {
+            backToTopBtn.classList.remove("opacity-0", "translate-y-2", "pointer-events-none");
+            backToTopBtn.classList.add("opacity-100", "translate-y-0");
+          } else {
+            backToTopBtn.classList.add("opacity-0", "translate-y-2", "pointer-events-none");
+            backToTopBtn.classList.remove("opacity-100", "translate-y-0");
+          }
+        }
+
+        window.addEventListener("scroll", toggleButtonVisibility);
+        backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+        toggleButtonVisibility();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          new LittlePlanes();
+          initBackToTop();
+        });
+      } else {
+        new LittlePlanes();
+        initBackToTop();
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    font-family:
+      -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--bg-primary);
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+  }
+
+  ::-moz-selection {
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+  }
+</style>

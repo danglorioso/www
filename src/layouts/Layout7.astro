@@ -1,0 +1,467 @@
+---
+import "../globals.css";
+import SpeedInsights from "@vercel/speed-insights/astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer";
+
+interface Props {
+  title: string;
+  description?: string;
+  homepage?: boolean;
+}
+const { title, description, homepage } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="512x512" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{homepage ? title : `${title} | Dan Glorioso`}</title>
+  </head>
+
+  <body class="min-h-screen flex flex-col">
+    <canvas
+      id="background-canvas"
+      class="fixed top-0 left-0 w-full h-full pointer-events-none"
+      style="background: var(--bg-primary, #0f172a);"></canvas>
+
+    <div class="flex flex-col gap-4 flex-1">
+      <!-- Header -->
+      <Header />
+
+      <!-- Header spacer to prevent content from being hidden behind fixed header -->
+      <div class="h-20 sm:h-22"></div>
+
+      <!-- Mobile Menu (slides from behind header) -->
+      <div
+        id="mobile-menu"
+        class="md:hidden fixed left-0 right-0 z-40 transform -translate-y-full transition-all duration-300 ease-in-out pointer-events-none"
+        aria-hidden="true"
+      >
+        <!-- Full Screen Backdrop -->
+        <div
+          class="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+          id="mobile-menu-backdrop"
+        >
+        </div>
+
+        <!-- Menu Panel that slides from behind header -->
+        <div
+          class="relative z-40 bg-slate-900 border-b border-slate-700/50 shadow-2xl pt-20"
+        >
+          <!-- Navigation Links -->
+          <nav class="px-6 py-6">
+            <ul class="space-y-2" id="mobile-nav-links">
+              <!-- Navigation items will be populated by JavaScript -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Page Content -->
+      <main
+        class="flex-1 flex flex-col max-w-5xl px-8 md:px-16 py-8 mx-auto w-full relative z-0 page-fade-in"
+      >
+        <slot />
+      </main>
+
+      <!-- Footer -->
+      <Footer />
+    </div>
+
+    <!-- Back to Top Button -->
+    <button
+      id="back-to-top"
+      class="fixed bottom-6 right-6 p-3 z-[100] bg-slate-850/90 hover:bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-full shadow-lg transition-all duration-300 opacity-0 translate-y-2 pointer-events-none group"
+      aria-label="Back to top"
+    >
+      <svg
+        class="w-5 h-5 mx-auto text-gray-300 group-hover:text-white transition-colors duration-200"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+      </svg>
+    </button>
+
+    <!-- Vercel Speed Insights -->
+    <SpeedInsights />
+
+    <script is:inline>
+      // Aviation-Themed Subtle Background
+      // Composed of three quiet layers:
+      //   1. Faint star field (cruising altitude at night)
+      //   2. Slow great-circle flight path arcs drifting across the screen
+      //   3. Minimal altitude tick marks along the left edge (like an altimeter strip)
+
+      class AviationBackground {
+        constructor() {
+          this.canvas = document.getElementById("background-canvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.t = 0;
+
+          // ── Config ──────────────────────────────────────────────
+          this.config = {
+            // Stars
+            starCount: 180,
+            starOpacityMax: 0.35,
+            starTwinkleSpeed: 0.0008,
+
+            // Flight path arcs
+            arcCount: 5,
+            arcOpacity: 0.07,
+            arcLineWidth: 1.0,
+            arcSpeed: 0.000055,    // how fast arcs drift rightward
+
+            // Altitude strip (left edge ticks)
+            altTickOpacity: 0.07,
+            altTickCount: 18,
+            altTickSpacing: 52,    // px between ticks
+
+            // Horizon grid lines (very faint perspective grid)
+            horizonOpacity: 0.045,
+            horizonLineCount: 7,
+          };
+          // ────────────────────────────────────────────────────────
+
+          this.bgColor = this.getBgColor();
+          this.rgb = this.colorToRgb(this.bgColor);
+
+          this.stars = [];
+          this.arcs = [];
+
+          this.resize();
+          this.buildStars();
+          this.buildArcs();
+          this.bindEvents();
+          this.animate();
+        }
+
+        getBgColor() {
+          const c = getComputedStyle(document.documentElement)
+            .getPropertyValue("--bg-primary").trim();
+          return c || "#0f172a";
+        }
+
+        colorToRgb(color) {
+          if (!color) return [15, 23, 42];
+          if (color.startsWith("#")) {
+            let hex = color.replace(/^#/, "");
+            if (hex.length === 3) hex = hex.split("").map(h => h + h).join("");
+            const n = parseInt(hex, 16);
+            return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+          }
+          if (color.startsWith("rgb")) {
+            const m = color.match(/\d+/g);
+            return [parseInt(m[0]), parseInt(m[1]), parseInt(m[2])];
+          }
+          return [15, 23, 42];
+        }
+
+        resize() {
+          this.canvas.width = window.innerWidth;
+          this.canvas.height = window.innerHeight;
+          this.buildStars();
+          this.buildArcs();
+        }
+
+        bindEvents() {
+          window.addEventListener("resize", () => this.resize());
+        }
+
+        // ── Layer 1: Stars ─────────────────────────────────────────
+        buildStars() {
+          this.stars = [];
+          for (let i = 0; i < this.config.starCount; i++) {
+            this.stars.push({
+              x: Math.random() * this.canvas.width,
+              y: Math.random() * this.canvas.height * 0.75, // keep to upper sky
+              r: Math.random() * 0.9 + 0.3,
+              phase: Math.random() * Math.PI * 2,
+              speed: this.config.starTwinkleSpeed * (0.5 + Math.random()),
+              baseOpacity: 0.08 + Math.random() * this.config.starOpacityMax,
+            });
+          }
+        }
+
+        drawStars(t) {
+          for (const s of this.stars) {
+            const op = s.baseOpacity * (0.6 + 0.4 * Math.sin(t * s.speed * 1000 + s.phase));
+            this.ctx.beginPath();
+            this.ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            this.ctx.fillStyle = `rgba(200, 220, 255, ${op})`;
+            this.ctx.fill();
+          }
+        }
+
+        // ── Layer 2: Great-circle flight path arcs ─────────────────
+        buildArcs() {
+          this.arcs = [];
+          const W = this.canvas.width;
+          const H = this.canvas.height;
+
+          for (let i = 0; i < this.config.arcCount; i++) {
+            // Each arc is defined by two endpoint "cities" off-screen
+            // and a control point that gives it a great-circle curve
+            this.arcs.push({
+              // Progress offset so arcs are staggered, not all in sync
+              offset: Math.random(),
+              // Vertical band each arc lives in
+              yBand: 0.15 + (i / this.config.arcCount) * 0.55,
+              // How much the arc bows upward (negative = bows up)
+              curve: -(0.12 + Math.random() * 0.18),
+              // Small per-arc speed variation
+              speedMult: 0.7 + Math.random() * 0.6,
+              // Dotted vs solid
+              dashed: Math.random() > 0.4,
+              // Trail dot (the "aircraft position")
+              showDot: Math.random() > 0.3,
+            });
+          }
+        }
+
+        drawArcs(t) {
+          const W = this.canvas.width;
+          const H = this.canvas.height;
+          const { arcOpacity, arcLineWidth, arcSpeed } = this.config;
+          const ctx = this.ctx;
+
+          for (const arc of this.arcs) {
+            // Progress 0→1 cycles continuously
+            const progress = ((t * arcSpeed * arc.speedMult + arc.offset) % 1 + 1) % 1;
+
+            // Arc spans full width with slight vertical position
+            const y0 = H * arc.yBand;
+            const x0 = -W * 0.15;
+            const x1 = W * 1.15;
+            const y1 = y0 + H * 0.05;
+
+            // Quadratic control point — bows the arc
+            const cpx = (x0 + x1) / 2;
+            const cpy = y0 + H * arc.curve;
+
+            // Evaluate quadratic bezier at point t for the dot position
+            const dotX = (1 - progress) * (1 - progress) * x0
+                        + 2 * (1 - progress) * progress * cpx
+                        + progress * progress * x1;
+            const dotY = (1 - progress) * (1 - progress) * y0
+                        + 2 * (1 - progress) * progress * cpy
+                        + progress * progress * y1;
+
+            // Draw the full path (faint, dashed)
+            ctx.save();
+            ctx.strokeStyle = `rgba(160, 200, 255, ${arcOpacity})`;
+            ctx.lineWidth = arcLineWidth;
+            if (arc.dashed) ctx.setLineDash([4, 10]);
+            else ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.quadraticCurveTo(cpx, cpy, x1, y1);
+            ctx.stroke();
+            ctx.restore();
+
+            // Draw the aircraft dot with a soft glow
+            if (arc.showDot) {
+              // Glow
+              const grd = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 7);
+              grd.addColorStop(0, `rgba(180, 215, 255, ${arcOpacity * 2.5})`);
+              grd.addColorStop(1, `rgba(180, 215, 255, 0)`);
+              ctx.beginPath();
+              ctx.arc(dotX, dotY, 7, 0, Math.PI * 2);
+              ctx.fillStyle = grd;
+              ctx.fill();
+
+              // Core dot
+              ctx.beginPath();
+              ctx.arc(dotX, dotY, 1.5, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(210, 230, 255, ${arcOpacity * 4})`;
+              ctx.fill();
+            }
+          }
+        }
+
+        // ── Layer 3: Altitude strip ticks (left edge) ──────────────
+        drawAltitudeTicks(t) {
+          const { altTickOpacity, altTickCount, altTickSpacing } = this.config;
+          const ctx = this.ctx;
+          const H = this.canvas.height;
+
+          // Slowly scroll the ticks upward over time
+          const scroll = (t * 8) % altTickSpacing;
+
+          ctx.strokeStyle = `rgba(160, 200, 230, ${altTickOpacity})`;
+          ctx.lineWidth = 0.75;
+          ctx.setLineDash([]);
+
+          for (let i = 0; i < altTickCount; i++) {
+            const y = (i * altTickSpacing - scroll + H) % H;
+            const isMajor = i % 5 === 0;
+            const tickLen = isMajor ? 18 : 10;
+
+            ctx.globalAlpha = isMajor ? 1.2 : 0.7;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(tickLen, y);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1.0;
+        }
+
+        // ── Layer 4: Perspective horizon grid ──────────────────────
+        drawHorizonGrid() {
+          const { horizonOpacity, horizonLineCount } = this.config;
+          const W = this.canvas.width;
+          const H = this.canvas.height;
+          const ctx = this.ctx;
+
+          // Horizon sits at ~40% down the screen
+          const horizonY = H * 0.40;
+          const vanishX = W * 0.5;
+
+          ctx.strokeStyle = `rgba(150, 190, 230, ${horizonOpacity})`;
+          ctx.lineWidth = 0.75;
+          ctx.setLineDash([]);
+
+          // Horizontal parallel lines converging toward vanishing point
+          for (let i = 0; i < horizonLineCount; i++) {
+            const t = (i + 1) / (horizonLineCount + 1);
+            // Lines spread out below the horizon
+            const y = horizonY + t * t * (H * 0.55);
+
+            // Perspective foreshortening: lines get closer to vanishing x
+            const spreadFactor = 1 - t * 0.7;
+            const x0 = vanishX - (W * 0.65) * spreadFactor;
+            const x1 = vanishX + (W * 0.65) * spreadFactor;
+
+            ctx.globalAlpha = (1 - t * 0.6);
+            ctx.beginPath();
+            ctx.moveTo(x0, y);
+            ctx.lineTo(x1, y);
+            ctx.stroke();
+          }
+
+          // Vertical convergence lines (longitude lines)
+          const vLineCount = 9;
+          for (let i = 0; i < vLineCount; i++) {
+            const frac = i / (vLineCount - 1);
+            // Bottom spread
+            const xBottom = W * 0.1 + frac * W * 0.8;
+            // Top convergence toward vanishing point
+            const xTop = vanishX + (xBottom - vanishX) * 0.08;
+            const yTop = horizonY;
+            const yBottom = H * 0.95;
+
+            ctx.globalAlpha = horizonOpacity * (1 - Math.abs(frac - 0.5) * 0.5) * 8;
+            ctx.beginPath();
+            ctx.moveTo(xTop, yTop);
+            ctx.lineTo(xBottom, yBottom);
+            ctx.stroke();
+          }
+
+          ctx.globalAlpha = 1.0;
+          ctx.setLineDash([]);
+
+          // The horizon line itself — slightly brighter
+          ctx.strokeStyle = `rgba(160, 200, 240, ${horizonOpacity * 2.2})`;
+          ctx.lineWidth = 0.9;
+          ctx.beginPath();
+          ctx.moveTo(0, horizonY);
+          ctx.lineTo(W, horizonY);
+          ctx.stroke();
+        }
+
+        // ── Main loop ──────────────────────────────────────────────
+        animate() {
+          const [br, bg, bb] = this.rgb;
+          const ctx = this.ctx;
+          const W = this.canvas.width;
+          const H = this.canvas.height;
+
+          // Clear
+          ctx.fillStyle = `rgb(${br}, ${bg}, ${bb})`;
+          ctx.fillRect(0, 0, W, H);
+
+          this.drawHorizonGrid();
+          this.drawStars(this.t);
+          this.drawArcs(this.t);
+          this.drawAltitudeTicks(this.t);
+
+          this.t += 1;
+          requestAnimationFrame(() => this.animate());
+        }
+      }
+
+      // Back to Top Button Functionality
+      function initBackToTop() {
+        const backToTopBtn = document.getElementById("back-to-top");
+        if (!backToTopBtn) return;
+
+        function toggleButtonVisibility() {
+          const scrollTop =
+            window.pageYOffset || document.documentElement.scrollTop;
+          if (scrollTop > 300) {
+            backToTopBtn.classList.remove("opacity-0", "translate-y-2", "pointer-events-none");
+            backToTopBtn.classList.add("opacity-100", "translate-y-0");
+          } else {
+            backToTopBtn.classList.add("opacity-0", "translate-y-2", "pointer-events-none");
+            backToTopBtn.classList.remove("opacity-100", "translate-y-0");
+          }
+        }
+
+        window.addEventListener("scroll", toggleButtonVisibility);
+        backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+        toggleButtonVisibility();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          new AviationBackground();
+          initBackToTop();
+        });
+      } else {
+        new AviationBackground();
+        initBackToTop();
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    font-family:
+      -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--bg-primary);
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+  }
+
+  ::-moz-selection {
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+  }
+</style>

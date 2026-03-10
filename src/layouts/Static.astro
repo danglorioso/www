@@ -1,0 +1,316 @@
+---
+import "../globals.css";
+import SpeedInsights from "@vercel/speed-insights/astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer";
+
+interface Props {
+  title: string;
+  description?: string;
+  homepage?: boolean;
+}
+const { title, description, homepage } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="512x512" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{homepage ? title : `${title} | Dan Glorioso`}</title>
+  </head>
+
+  <body class="min-h-screen flex flex-col">
+    <canvas
+      id="background-canvas"
+      class="fixed top-0 left-0 w-full h-full pointer-events-none"
+      style="background: var(--bg-primary, #0f172a);"></canvas>
+
+    <div class="flex flex-col gap-4 flex-1">
+      <!-- Header -->
+      <Header />
+
+      <!-- Header spacer to prevent content from being hidden behind fixed header -->
+      <div class="h-20 sm:h-22"></div>
+
+      <!-- Mobile Menu (slides from behind header) -->
+      <div
+        id="mobile-menu"
+        class="md:hidden fixed left-0 right-0 z-40 transform -translate-y-full transition-all duration-300 ease-in-out pointer-events-none"
+        aria-hidden="true"
+      >
+        <!-- Full Screen Backdrop -->
+        <div
+          class="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+          id="mobile-menu-backdrop"
+        >
+        </div>
+
+        <!-- Menu Panel that slides from behind header -->
+        <div
+          class="relative z-40 bg-slate-900 border-b border-slate-700/50 shadow-2xl pt-20"
+        >
+          <!-- Navigation Links -->
+          <nav class="px-6 py-6">
+            <ul class="space-y-2" id="mobile-nav-links">
+              <!-- Navigation items will be populated by JavaScript -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Page Content -->
+      <main
+        class="flex-1 flex flex-col max-w-5xl px-8 md:px-16 py-8 mx-auto w-full relative z-0 page-fade-in"
+      >
+        <slot />
+      </main>
+
+      <!-- Footer -->
+      <Footer />
+    </div>
+
+    <!-- Back to Top Button -->
+    <button
+      id="back-to-top"
+      class="fixed bottom-6 right-6 p-3 z-[100] bg-slate-850/90 hover:bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-full shadow-lg transition-all duration-300 opacity-0 translate-y-2 pointer-events-none group"
+      aria-label="Back to top"
+    >
+      <svg
+        class="w-5 h-5 mx-auto text-gray-300 group-hover:text-white transition-colors duration-200"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+      </svg>
+    </button>
+
+    <!-- Vercel Speed Insights -->
+    <SpeedInsights />
+
+    <script is:inline>
+      // Subtle Noise Grain Texture Background
+      class NoiseGrain {
+        constructor() {
+          this.canvas = document.getElementById("background-canvas");
+          this.ctx = this.canvas.getContext("2d");
+
+          // Config — tweak these to taste
+          this.config = {
+            grainOpacity: 0.038,    // overall grain intensity (0–1); keep low for subtlety
+            grainSize: 1,           // pixel size of each grain (1 = finest)
+            animated: true,         // true = grain refreshes each frame (film grain feel)
+                                    // false = static grain baked once (cheaper on CPU)
+            animationInterval: 3,   // only redraw grain every N frames (1 = every frame)
+            bgOpacity: 1.0,         // fill opacity for the base bg color layer
+          };
+
+          this.bgColor = this.getBgColor();
+          this.bgRgb = this.colorToRgb(this.bgColor);
+          this.frame = 0;
+
+          // Off-screen buffer so we only composite, not regenerate, when static
+          this.grainCanvas = document.createElement("canvas");
+          this.grainCtx = this.grainCanvas.getContext("2d");
+
+          this.resize();
+          this.bindEvents();
+
+          if (!this.config.animated) {
+            this.generateGrain();
+          }
+
+          this.animate();
+        }
+
+        getBgColor() {
+          const c = getComputedStyle(document.documentElement)
+            .getPropertyValue("--bg-primary")
+            .trim();
+          return c || "#0f172a";
+        }
+
+        colorToRgb(color) {
+          if (!color) return [15, 23, 42];
+          if (color.startsWith("#")) {
+            let hex = color.replace(/^#/, "");
+            if (hex.length === 3) hex = hex.split("").map(h => h + h).join("");
+            const n = parseInt(hex, 16);
+            return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+          }
+          if (color.startsWith("rgb")) {
+            const m = color.match(/\d+/g);
+            return [parseInt(m[0]), parseInt(m[1]), parseInt(m[2])];
+          }
+          return [15, 23, 42];
+        }
+
+        resize() {
+          const W = window.innerWidth;
+          const H = window.innerHeight;
+          this.canvas.width = W;
+          this.canvas.height = H;
+          this.grainCanvas.width = W;
+          this.grainCanvas.height = H;
+
+          // Regenerate static grain on resize
+          if (!this.config.animated) {
+            this.generateGrain();
+          }
+        }
+
+        bindEvents() {
+          window.addEventListener("resize", () => this.resize());
+        }
+
+        generateGrain() {
+          const W = this.grainCanvas.width;
+          const H = this.grainCanvas.height;
+          const gs = this.config.grainSize;
+          const cols = Math.ceil(W / gs);
+          const rows = Math.ceil(H / gs);
+
+          // Use ImageData for fast pixel-level access
+          const imageData = this.grainCtx.createImageData(W, H);
+          const data = imageData.data;
+          const [br, bg, bb] = this.bgRgb;
+
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              // Random luminance offset for this grain cell
+              const luma = (Math.random() - 0.5) * 255;
+
+              // Fill gs×gs block
+              for (let dy = 0; dy < gs; dy++) {
+                for (let dx = 0; dx < gs; dx++) {
+                  const px = c * gs + dx;
+                  const py = r * gs + dy;
+                  if (px >= W || py >= H) continue;
+                  const idx = (py * W + px) * 4;
+
+                  // Blend grain over bg color
+                  data[idx]     = Math.max(0, Math.min(255, br + luma));
+                  data[idx + 1] = Math.max(0, Math.min(255, bg + luma));
+                  data[idx + 2] = Math.max(0, Math.min(255, bb + luma));
+                  data[idx + 3] = Math.round(this.config.grainOpacity * 255);
+                }
+              }
+            }
+          }
+
+          this.grainCtx.putImageData(imageData, 0, 0);
+        }
+
+        animate() {
+          this.frame++;
+          const ctx = this.ctx;
+          const W = this.canvas.width;
+          const H = this.canvas.height;
+          const [br, bg, bb] = this.bgRgb;
+
+          // 1. Paint solid background
+          ctx.fillStyle = `rgb(${br}, ${bg}, ${bb})`;
+          ctx.fillRect(0, 0, W, H);
+
+          // 2. Composite grain layer
+          if (this.config.animated) {
+            // Regenerate on every Nth frame for film-grain flicker
+            if (this.frame % this.config.animationInterval === 0) {
+              this.generateGrain();
+            }
+          }
+
+          ctx.drawImage(this.grainCanvas, 0, 0);
+
+          requestAnimationFrame(() => this.animate());
+        }
+      }
+
+      // Back to Top Button Functionality
+      function initBackToTop() {
+        const backToTopBtn = document.getElementById("back-to-top");
+        if (!backToTopBtn) return;
+
+        function toggleButtonVisibility() {
+          const scrollTop =
+            window.pageYOffset || document.documentElement.scrollTop;
+
+          if (scrollTop > 300) {
+            backToTopBtn.classList.remove(
+              "opacity-0",
+              "translate-y-2",
+              "pointer-events-none"
+            );
+            backToTopBtn.classList.add("opacity-100", "translate-y-0");
+          } else {
+            backToTopBtn.classList.add(
+              "opacity-0",
+              "translate-y-2",
+              "pointer-events-none"
+            );
+            backToTopBtn.classList.remove("opacity-100", "translate-y-0");
+          }
+        }
+
+        function scrollToTop() {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        window.addEventListener("scroll", toggleButtonVisibility);
+        backToTopBtn.addEventListener("click", scrollToTop);
+        toggleButtonVisibility();
+      }
+
+      // Initialize when DOM is loaded
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          new NoiseGrain();
+          initBackToTop();
+        });
+      } else {
+        new NoiseGrain();
+        initBackToTop();
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    font-family:
+      -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--bg-primary);
+    min-height: 100vh;
+  }
+
+  /* Text selection highlight color */
+  ::selection {
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+  }
+
+  ::-moz-selection {
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+  }
+</style>
