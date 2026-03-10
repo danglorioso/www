@@ -19,7 +19,15 @@ const isActive = (href: string) => {
 
 <!-- Desktop Nav -->
 <nav class="hidden md:flex items-center">
-  <ul class="flex items-center gap-1">
+  <ul
+    class="relative flex items-center gap-1"
+    data-nav-magnetic
+  >
+    <!-- Magnetic hover background -->
+    <div
+      class="pointer-events-none absolute top-0 left-0 rounded-lg bg-slate-800/60 transition-all duration-150 ease-out opacity-0"
+      data-nav-highlight
+    />
     {
       navItems.map((item) => {
         const active = isActive(item.href);
@@ -27,11 +35,13 @@ const isActive = (href: string) => {
           <li>
             <a
               href={item.href}
-              class={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+              class={`relative z-10 items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                 active
-                  ? "text-text-primary hover:bg-slate-800/60"
-                  : "text-text-secondary hover:text-text-primary hover:bg-slate-800/60"
+                  ? "text-text-primary"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
+              data-nav-item
+              data-nav-active={active ? "true" : "false"}
             >
               {item.label}
               {active && (
@@ -44,3 +54,49 @@ const isActive = (href: string) => {
     }
   </ul>
 </nav>
+
+<script>
+  if (typeof window !== "undefined") {
+    const setupMagneticNav = () => {
+      const nav = document.querySelector<HTMLElement>("[data-nav-magnetic]");
+      const highlight =
+        nav?.querySelector<HTMLDivElement>("[data-nav-highlight]");
+      const items =
+        nav?.querySelectorAll<HTMLAnchorElement>("[data-nav-item]") ?? [];
+
+      if (!nav || !highlight || items.length === 0) return;
+
+      const moveHighlightTo = (el: HTMLElement) => {
+        const navRect = nav.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+
+        const top = elRect.top - navRect.top;
+        const left = elRect.left - navRect.left;
+        const width = elRect.width;
+        const height = elRect.height;
+
+        highlight.style.transform = `translate(${left}px, ${top}px)`;
+        highlight.style.width = `${width}px`;
+        highlight.style.height = `${height}px`;
+        highlight.style.opacity = "1";
+      };
+
+      items.forEach((item) => {
+        item.addEventListener("mouseenter", () => moveHighlightTo(item));
+      });
+
+      nav.addEventListener("mouseleave", () => {
+        highlight.style.opacity = "0";
+      });
+
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupMagneticNav, {
+        once: true,
+      });
+    } else {
+      setupMagneticNav();
+    }
+  }
+</script>
