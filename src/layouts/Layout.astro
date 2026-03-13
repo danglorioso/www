@@ -1,6 +1,5 @@
 ---
 import "../globals.css";
-import SpeedInsights from "@vercel/speed-insights/astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer";
 
@@ -25,12 +24,10 @@ const { title, description, homepage } = Astro.props;
   </head>
 
   <body class="min-h-screen flex flex-col">
-    <canvas
-      id="background-canvas"
-      class="fixed top-0 left-0 w-full h-full pointer-events-none"
-      style="background: var(--bg-primary, #0f172a);"></canvas>
+    <!-- Static background layer (grid + scanlines) -->
+    <div class="fixed inset-0 -z-20 pointer-events-none site-bg"></div>
 
-    <div class="flex flex-col gap-4 flex-1">
+    <div class="flex flex-col flex-1 gap-4">
       <!-- Header -->
       <Header />
 
@@ -65,7 +62,7 @@ const { title, description, homepage } = Astro.props;
 
       <!-- Page Content -->
       <main
-        class="flex-1 flex flex-col max-w-5xl px-8 md:px-16 py-8 mx-auto w-full relative z-0 page-fade-in"
+        class="flex flex-col flex-1 max-w-5xl px-8 md:px-16 py-8 mx-auto w-full relative z-0"
       >
         <slot />
       </main>
@@ -94,198 +91,7 @@ const { title, description, homepage } = Astro.props;
       </svg>
     </button>
 
-    <!-- Vercel Speed Insights -->
-    <SpeedInsights />
-
     <script is:inline>
-      // Subtle Floating Particles Background
-      class FloatingParticles {
-        constructor() {
-          this.canvas = document.getElementById("background-canvas");
-          this.ctx = this.canvas.getContext("2d");
-          this.particles = [];
-          this.mouseX = 0;
-          this.mouseY = 0;
-          this.bgColor = this.getBackgroundColor();
-
-          this.resize();
-          this.createParticles();
-          this.bindEvents();
-          this.animate();
-        }
-
-        getBackgroundColor() {
-          const bgColor = getComputedStyle(document.documentElement)
-            .getPropertyValue("--bg-primary")
-            .trim();
-          return bgColor || "#0f172a";
-        }
-
-        resize() {
-          this.canvas.width = window.innerWidth;
-          this.canvas.height = window.innerHeight;
-        }
-
-        createParticles() {
-          this.particles = [];
-          const particleCount = Math.floor(
-            (this.canvas.width * this.canvas.height) / 15000
-          );
-
-          for (let i = 0; i < particleCount; i++) {
-            this.particles.push({
-              x: Math.random() * this.canvas.width,
-              y: Math.random() * this.canvas.height,
-              radius: 1 + Math.random() * 2,
-              speedX: (Math.random() - 0.5) * 0.3,
-              speedY: (Math.random() - 0.5) * 0.3,
-              opacity: 0.1 + Math.random() * 0.3,
-              baseOpacity: 0.1 + Math.random() * 0.3,
-              pulseSpeed: 0.002 + Math.random() * 0.003,
-              pulsePhase: Math.random() * Math.PI * 2,
-            });
-          }
-        }
-
-        bindEvents() {
-          window.addEventListener("resize", () => {
-            this.resize();
-            this.createParticles();
-          });
-
-          // Subtle mouse interaction
-          this.canvas.addEventListener("mousemove", (e) => {
-            this.mouseX = e.clientX;
-            this.mouseY = e.clientY;
-          });
-        }
-
-        updateParticles() {
-          this.particles.forEach((particle) => {
-            // Update position
-            particle.x += particle.speedX;
-            particle.y += particle.speedY;
-
-            // Wrap around edges
-            if (particle.x < 0) particle.x = this.canvas.width;
-            if (particle.x > this.canvas.width) particle.x = 0;
-            if (particle.y < 0) particle.y = this.canvas.height;
-            if (particle.y > this.canvas.height) particle.y = 0;
-
-            // Subtle pulsing opacity
-            particle.opacity =
-              particle.baseOpacity +
-              Math.sin(Date.now() * particle.pulseSpeed + particle.pulsePhase) *
-                0.1;
-          });
-        }
-
-        drawConnections() {
-          const maxDistance = 120;
-
-          for (let i = 0; i < this.particles.length; i++) {
-            for (let j = i + 1; j < this.particles.length; j++) {
-              const dx = this.particles[i].x - this.particles[j].x;
-              const dy = this.particles[i].y - this.particles[j].y;
-              const distance = Math.sqrt(dx * dx + dy * dy);
-
-              if (distance < maxDistance) {
-                const opacity = (1 - distance / maxDistance) * 0.15;
-                const accentColor =
-                  getComputedStyle(document.documentElement)
-                    .getPropertyValue("--accent-primary")
-                    .trim() || "rgb(59, 130, 246)";
-
-                // Convert oklch or hex to rgb if needed
-                let r, g, b;
-                if (accentColor.startsWith("oklch")) {
-                  // Fallback to blue if oklch parsing fails
-                  r = 59;
-                  g = 130;
-                  b = 246;
-                } else if (accentColor.startsWith("#")) {
-                  const hex = accentColor.slice(1);
-                  r = parseInt(hex.slice(0, 2), 16);
-                  g = parseInt(hex.slice(2, 4), 16);
-                  b = parseInt(hex.slice(4, 6), 16);
-                } else if (accentColor.startsWith("rgb")) {
-                  const matches = accentColor.match(/\d+/g);
-                  r = parseInt(matches[0]);
-                  g = parseInt(matches[1]);
-                  b = parseInt(matches[2]);
-                } else {
-                  r = 59;
-                  g = 130;
-                  b = 246;
-                }
-
-                this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-                this.ctx.lineWidth = 0.5;
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
-                this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
-                this.ctx.stroke();
-              }
-            }
-          }
-        }
-
-        drawParticles() {
-          const accentColor =
-            getComputedStyle(document.documentElement)
-              .getPropertyValue("--accent-primary")
-              .trim() || "rgb(59, 130, 246)";
-
-          // Convert to rgb values
-          let r, g, b;
-          if (accentColor.startsWith("oklch")) {
-            r = 59;
-            g = 130;
-            b = 246;
-          } else if (accentColor.startsWith("#")) {
-            const hex = accentColor.slice(1);
-            r = parseInt(hex.slice(0, 2), 16);
-            g = parseInt(hex.slice(2, 4), 16);
-            b = parseInt(hex.slice(4, 6), 16);
-          } else if (accentColor.startsWith("rgb")) {
-            const matches = accentColor.match(/\d+/g);
-            r = parseInt(matches[0]);
-            g = parseInt(matches[1]);
-            b = parseInt(matches[2]);
-          } else {
-            r = 59;
-            g = 130;
-            b = 246;
-          }
-
-          this.particles.forEach((particle) => {
-            this.ctx.beginPath();
-            this.ctx.arc(
-              particle.x,
-              particle.y,
-              particle.radius,
-              0,
-              Math.PI * 2
-            );
-            this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${particle.opacity})`;
-            this.ctx.fill();
-          });
-        }
-
-        animate() {
-          // Clear canvas
-          this.ctx.fillStyle = this.bgColor;
-          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-          // Update and draw
-          this.updateParticles();
-          this.drawConnections();
-          this.drawParticles();
-
-          requestAnimationFrame(() => this.animate());
-        }
-      }
-
       // Back to Top Button Functionality
       function initBackToTop() {
         const backToTopBtn = document.getElementById("back-to-top");
@@ -324,14 +130,11 @@ const { title, description, homepage } = Astro.props;
         toggleButtonVisibility();
       }
 
-      // Initialize when DOM is loaded
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", () => {
-          new FloatingParticles();
           initBackToTop();
         });
       } else {
-        new FloatingParticles();
         initBackToTop();
       }
     </script>
@@ -357,6 +160,61 @@ const { title, description, homepage } = Astro.props;
     min-height: 100vh;
   }
 
+  .site-bg {
+    background:
+      radial-gradient(
+        900px 600px at 15% 10%,
+        rgba(148, 163, 184, 0.11),
+        transparent 60%
+      ),
+      radial-gradient(
+        800px 520px at 85% 25%,
+        color-mix(in oklab, var(--accent-secondary, var(--accent-primary)) 26%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        900px 700px at 55% 110%,
+        rgba(148, 163, 184, 0.16),
+        transparent 60%
+      ),
+      
+  }
+
+  .site-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to right, rgba(148, 163, 184, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(circle at 50% 35%, black 0%, transparent 70%);
+    opacity: 0.8;
+  }
+
+  .site-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.018) 0px,
+        rgba(255, 255, 255, 0.018) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      radial-gradient(
+        1200px 900px at 50% 40%,
+        transparent 0%,
+        rgba(0, 0, 0, 0.45) 78%,
+        rgba(0, 0, 0, 0.7) 100%
+      );
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
   /* Text selection highlight color */
   ::selection {
     background-color: var(--accent-primary);
@@ -368,3 +226,4 @@ const { title, description, homepage } = Astro.props;
     color: var(--text-primary);
   }
 </style>
+
