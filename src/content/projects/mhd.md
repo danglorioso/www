@@ -1,12 +1,12 @@
 ---
 title: "Massachusetts History Day"
-description: "A data visualization web application for Massachusetts Historical Society to track annual student participation. Led as project manager, built for JumboCode project."
+description: "A data visualization web application for Massachusetts Historical Society to track annual student participation. Features line/bar charts and heatmaps. Led as project manager, built for JumboCode project."
 startDate: 2025-09-05
 status: "in-progress"
-technologies: ["React", "Next.js", "TypeScript", "D3.js", "Mapbox", "Tailwind CSS", "Vercel", "Drizzle ORM"]
+technologies: ["React", "Next.js", "TypeScript", "D3.js", "MapLibre", "Tailwind CSS", "Vercel", "Drizzle ORM"]
 categories: ["Non-profit", "Client Work"]
 liveUrl: "https://masshistday.vercel.app"
-githubUrl: "https://github.com/jumbocode/mhd"
+githubUrl: "https://github.com/JumboCode/MHD"
 draft: false
 favicon: "mhd.png"
 priority: 6

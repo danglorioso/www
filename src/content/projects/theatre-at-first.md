@@ -1,10 +1,10 @@
 ---
 title: "Theatre@FIRST"
-description: "Worked on a team of developers to create an inventory management system for Theatre@FIRST--a community theatre in Somerville, MA--to track costumes, props, and furniture with photo uploads, location tracking, and condition monitoring."
+description: "An inventory management system for Theatre@FIRST—a community theatre in Somerville, MA—to track costumes, props, and furniture with photo uploads, location tracking, and condition monitoring. Created on a team of 10 developers."
 startDate: 2023-09-02
 endDate: 2024-05-15
 status: "completed"
-technologies: ["React", "TypeScript", "Node.js", "PostgreSQL", "Tailwind CSS", "Neon", "Drizzle"]
+technologies: ["React", "TypeScript", "Node.js", "PostgreSQL", "Tailwind CSS", "Neon", "Drizzle ORM", "Clerk"]
 categories: ["Non-profit", "Client Work"]
 githubUrl: "https://github.com/JumboCode/Theatre-At-First"
 favicon: "theatre.jpg"

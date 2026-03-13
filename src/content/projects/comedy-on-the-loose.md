@@ -1,5 +1,5 @@
 ---
-title: "Comedy on the Loose Official Website"
+title: "Comedy on the Loose Website"
 description: "The digital presence for sketch comedy TV show Comedy on the Loose, featuring episode archives, airing schedule integration, and promotional content."
 startDate: 2025-06-04
 endDate: 2025-08-12
