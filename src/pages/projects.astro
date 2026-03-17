@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import ProjectCard from "../components/ProjectCard.astro";
+import ProjectDetails from "../components/ProjectDetails.astro";
 import { getCollection } from "astro:content";
 
 // Get all projects and sort
@@ -103,31 +104,40 @@ const categories = Array.from(categorySet).sort();
       <!-- Projects List -->
       <div id="projects-container" class="flex flex-col gap-6">
         {
-          sortedProjects.map((project) => (
-            <div
-              class="project-item"
-              data-title={project.data.title.toLowerCase()}
-              data-description={project.data.description.toLowerCase()}
-              data-categories={project.data.categories ? JSON.stringify(project.data.categories) : "[]"}
-            >
-              <ProjectCard
-                slug={project.slug}
-                title={project.data.title}
-                description={project.data.description}
-                status={project.data.status}
-                technologies={project.data.technologies}
-                categories={project.data.categories ?? []}
-                featured={project.data.featured}
-                githubUrl={project.data.githubUrl}
-                liveUrl={project.data.liveUrl}
-                imageUrl={project.data.imageUrl}
-                favicon={project.data.favicon}
-                achievements={project.data.achievements}
-                startDate={project.data.startDate.toISOString()}
-                endDate={project.data.endDate?.toISOString()}
-              />
-            </div>
-          ))
+          sortedProjects.map((project) => {
+            const hasDetails = !!(
+              (project.data.achievements && project.data.achievements.length > 0) ||
+              (project.data.collaborators && project.data.collaborators.length > 0) ||
+              (project.body ?? "").trim().length > 0
+            );
+            return (
+              <div
+                class="project-item"
+                data-title={project.data.title.toLowerCase()}
+                data-description={project.data.description.toLowerCase()}
+                data-categories={project.data.categories ? JSON.stringify(project.data.categories) : "[]"}
+              >
+                <ProjectCard
+                  slug={project.slug}
+                  title={project.data.title}
+                  description={project.data.description}
+                  status={project.data.status}
+                  technologies={project.data.technologies}
+                  categories={project.data.categories ?? []}
+                  featured={project.data.featured}
+                  githubUrl={project.data.githubUrl}
+                  liveUrl={project.data.liveUrl}
+                  imageUrl={project.data.imageUrl}
+                  favicon={project.data.favicon}
+                  achievements={project.data.achievements}
+                  startDate={project.data.startDate.toISOString()}
+                  endDate={project.data.endDate?.toISOString()}
+                  hasDetails={hasDetails}
+                />
+                {hasDetails && <ProjectDetails project={project} />}
+              </div>
+            );
+          })
         }
       </div>
 
@@ -140,6 +150,7 @@ const categories = Array.from(categorySet).sort();
 
   <script>
     (function () {
+      // ── Filter logic ──────────────────────────────────────────────────────
       const searchInput = document.getElementById("project-search");
       const categoryFilter = document.getElementById("category-filter");
       const projectsContainer = document.getElementById("projects-container");
@@ -176,7 +187,6 @@ const categories = Array.from(categorySet).sort();
           try {
             projectCategories = JSON.parse(categoriesJson);
           } catch (e) {
-            // Fallback to empty array if parsing fails
             projectCategories = [];
           }
 
@@ -195,7 +205,6 @@ const categories = Array.from(categorySet).sort();
           }
         });
 
-        // Update results count
         if (searchTerm || selectedCategory) {
           resultsCount.classList.remove("hidden");
           resultsNumber.textContent = String(visibleCount);
@@ -204,7 +213,6 @@ const categories = Array.from(categorySet).sort();
           resultsCount.classList.add("hidden");
         }
 
-        // Show/hide no results message
         if (visibleCount === 0 && (searchTerm || selectedCategory)) {
           noResults.classList.remove("hidden");
           projectsContainer.classList.add("hidden");
@@ -216,6 +224,31 @@ const categories = Array.from(categorySet).sort();
 
       searchInput?.addEventListener("input", filterProjects);
       categoryFilter?.addEventListener("change", filterProjects);
+
+      // ── Expand/collapse logic ─────────────────────────────────────────────
+      document.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        // Ignore clicks on links
+        if (target.closest("a")) return;
+
+        const card = target.closest("[data-project-card]") as HTMLElement | null;
+        if (!card) return;
+
+        const details = card.nextElementSibling as HTMLElement | null;
+        const chevron = card.querySelector(".expand-chevron") as HTMLElement | null;
+
+        const isExpanded = details?.classList.contains("is-expanded");
+
+        if (isExpanded) {
+          details?.classList.remove("is-expanded");
+          card.classList.remove("is-expanded");
+          if (chevron) chevron.style.transform = "";
+        } else {
+          details?.classList.add("is-expanded");
+          card.classList.add("is-expanded");
+          if (chevron) chevron.style.transform = "rotate(180deg)";
+        }
+      });
     })();
   </script>
 </Layout>
