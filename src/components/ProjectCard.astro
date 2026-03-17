@@ -15,6 +15,7 @@ interface Props {
   achievements?: string[];
   startDate: string;
   endDate?: string;
+  hasDetails?: boolean;
 }
 
 const {
@@ -29,6 +30,7 @@ const {
   liveUrl,
   startDate = "",
   endDate,
+  hasDetails = false,
 } = Astro.props;
 
 // Status styling
@@ -63,12 +65,15 @@ const currentStatus = statusConfig[status] || statusConfig["in-progress"];
 ---
 
 <div
-  class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg flex flex-col p-4 gap-3 hover:border-border-accent transition-all duration-200"
+  class:list={[
+    "card-outer bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg flex flex-col p-4 gap-3 transition-all duration-200",
+    hasDetails && "hover:border-border-accent cursor-pointer",
+  ]}
+  data-project-card={hasDetails ? slug : undefined}
 >
   <!-- Header with Favicon, Title and Status -->
-  <a href={``} class="group block cursor-pointer">
+  <div>
     <div class="flex items-center justify-between mb-3">
-      <!-- mb-3 workaround to account for gap-3 not working with <a> tag -->
       <div class="flex flex-1 items-center gap-3 min-w-0">
         <!-- Favicon -->
         {
@@ -83,7 +88,10 @@ const currentStatus = statusConfig[status] || statusConfig["in-progress"];
           )
         }
         <h3
-          class="text-2xl font-bold text-text-primary group-hover:text-accent-primary transition-colors flex-1"
+          class:list={[
+            "text-2xl font-bold text-text-primary transition-colors flex-1",
+            hasDetails && "group-hover:text-accent-primary",
+          ]}
         >
           {title}
         </h3>
@@ -115,7 +123,7 @@ const currentStatus = statusConfig[status] || statusConfig["in-progress"];
     <p class="text-text-secondary text-md leading-relaxed">
       {description}
     </p>
-  </a>
+  </div>
 
   <!-- Tech Stack -->
   <div class="flex flex-wrap gap-2">
@@ -200,4 +208,41 @@ const currentStatus = statusConfig[status] || statusConfig["in-progress"];
       )
     }
   </div>
+
+  <!-- Expand toggle (only when there are details to show) -->
+  {
+    hasDetails && (
+      <div class="expand-row border-t border-border-secondary pt-2 flex items-center justify-end gap-1.5">
+        <span class="expand-label text-xs text-text-secondary">Details</span>
+        <svg
+          class="expand-chevron w-3.5 h-3.5 text-text-secondary"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2.5"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+    )
+  }
 </div>
+
+<style>
+  .card-outer {
+    border-radius: 0.5rem;
+  }
+
+  .card-outer.is-expanded {
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+
+  .expand-chevron {
+    transition: transform 280ms ease;
+  }
+</style>
