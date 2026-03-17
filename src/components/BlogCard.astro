@@ -12,21 +12,8 @@ const {
   title = "",
   description = "",
   pubDate,
-  tags = [],
-  categories = [],
   featured = false,
 } = Astro.props;
-
-// Format date function
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-};
 
 // Format date for short display
 const formatDateShort = (dateString: string) => {
@@ -53,7 +40,7 @@ const formatDateShort = (dateString: string) => {
     datetime={pubDate}
     class="block md:hidden text-sm font-medium text-text-secondary border-b border-border-secondary pb-2"
   >
-    {formatDate(pubDate)}
+    {formatDateShort(pubDate)}
   </time>
 
   <!-- Header: Date badge (desktop), title, and description -->
