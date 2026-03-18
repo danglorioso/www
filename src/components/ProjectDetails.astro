@@ -51,6 +51,14 @@ const { Content } = await project.render();
           </div>
         )
       }
+      <div class="collapse-row">
+        <button class="collapse-btn" data-collapse-btn aria-label="Collapse details">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+          Collapse
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -145,4 +153,48 @@ const { Content } = await project.render();
     border-top: none;
     padding-top: 0;
   }
+
+  .collapse-row {
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid var(--border-secondary);
+    padding-top: 0.875rem;
+  }
+
+  .collapse-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.625rem;
+    border-radius: 0.25rem;
+    transition: color 150ms ease, background 150ms ease;
+  }
+
+  .collapse-btn:hover {
+    color: var(--text-secondary);
+    background: var(--bg-overlay);
+  }
 </style>
+
+<script>
+  document.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest("[data-collapse-btn]");
+    if (!btn) return;
+
+    e.stopPropagation();
+
+    const details = btn.closest(".project-details") as HTMLElement | null;
+    const card = details?.previousElementSibling as HTMLElement | null;
+    const chevron = card?.querySelector(".expand-chevron") as HTMLElement | null;
+
+    details?.classList.remove("is-expanded");
+    card?.classList.remove("is-expanded");
+    if (chevron) chevron.style.transform = "";
+  });
+</script>
