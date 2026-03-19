@@ -74,7 +74,7 @@ export default function ContributionGraph({ totalContributions, weeks }: Props) 
     <div className="not-prose my-6">
       <div className="bg-slate-950 rounded-lg p-4">
         {/* Scrollable grid — footer stays outside and anchored */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto text-center">
           <div ref={gridRef} className="relative inline-block">
             {/* Month labels row */}
             <div className="relative mb-1" style={{ height: "14px" }}>

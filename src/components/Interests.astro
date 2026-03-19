@@ -1,256 +1,182 @@
 <div class="flex flex-col gap-6">
-  <h2 class="text-3xl font-bold text-text-primary">Interests & Hobbies</h2>
+  <h2 class="text-3xl font-bold text-text-primary">Beyond the Code</h2>
   <p class="text-lg text-text-tertiary leading-relaxed">
-    When I'm not coding, you'll find me exploring brand new technologies,
-    working on side projects, or diving into some of my hobbies.
+    I'm a builder at heart — whether that's writing software, printing parts,
+    tracking storms, or guessing which flight my friend is on at 30,000 feet.
   </p>
+
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Interest Card 1 -->
-    <div
-      class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg p-6 hover:border-border-accent transition-all duration-200"
-    >
-      <div class="flex items-start gap-4">
-        <div
-          class="flex-shrink-0 w-12 h-12 rounded-lg bg-accent-primary/20 flex items-center justify-center"
-        >
-          <svg
-            class="w-6 h-6 text-accent-primary"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-          </svg>
-        </div>
-        <div>
-          <h3 class="text-xl font-semibold text-text-primary mb-2">
-            Open Source
-          </h3>
-          <p class="text-text-secondary leading-relaxed">
-            I love contributing to open-source projects and building tools that
-            help other developers. There's something rewarding about code that
-            lives beyond a single project.
-          </p>
-        </div>
-      </div>
-    </div>
 
-    <!-- Interest Card 2 -->
+    <!-- ── Aviation (featured, full-width) ── -->
     <div
-      class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg p-6 hover:border-border-accent transition-all duration-200"
+      class="md:col-span-2 bg-bg-card border border-border-primary rounded-xl overflow-hidden hover:border-border-accent transition-all duration-200"
     >
-      <div class="flex items-start gap-4">
-        <div
-          class="flex-shrink-0 w-12 h-12 rounded-lg bg-accent-primary/20 flex items-center justify-center"
-        >
-          <svg
-            class="w-6 h-6 text-accent-primary"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-            ></path>
-          </svg>
+      <!-- Visual banner — swap the gradient div for an <img> when you have a photo -->
+      <div class="relative h-48 bg-gradient-to-br from-accent-primary/30 via-accent-primary/10 to-transparent flex items-center justify-center overflow-hidden">
+        <!-- Placeholder: replace this div with <img src="/interests/aviation.jpg" alt="Aviation" class="w-full h-full object-cover" /> -->
+        <div class="absolute inset-0 opacity-10"
+          style="background-image: repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 0, transparent 50%); background-size: 20px 20px;">
         </div>
-        <div>
-          <h3 class="text-xl font-semibold text-text-primary mb-2">
-            Learning & Experimentation
-          </h3>
-          <p class="text-text-secondary leading-relaxed">
-            I'm always exploring new technologies, frameworks, and programming
-            paradigms. Currently diving into performance optimization,
-            TypeScript patterns, and modern web APIs.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Interest Card 3: Aviation Data -->
-    <div
-      class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg p-6 hover:border-border-accent transition-all duration-200"
-    >
-      <div class="flex flex-col gap-4">
-        <div class="flex items-start gap-4">
-          <div
-            class="flex-shrink-0 w-12 h-12 rounded-lg bg-accent-primary/20 flex items-center justify-center"
-          >
-            <svg
-              class="w-6 h-6 text-accent-primary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 8l7.5 3L21 5l-5.5 14L11 14l-5 4z"></path>
+        <svg class="w-24 h-24 text-accent-primary opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+            d="M3 8l7.5 3L21 5l-5.5 14L11 14l-5 4z" />
+        </svg>
+        <div class="absolute top-4 left-4">
+          <div class="w-10 h-10 rounded-lg bg-accent-primary/20 border border-accent-primary/30 flex items-center justify-center">
+            <svg class="w-5 h-5 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.5 3L21 5l-5.5 14L11 14l-5 4z" />
             </svg>
           </div>
-          <div>
-            <h3 class="text-xl font-semibold text-text-primary mb-2">
-              Aviation Data & ADS-B
-            </h3>
-            <p class="text-text-secondary leading-relaxed">
-              I run two Raspberry Pi ADS-B receivers that continuously upload
-              overhead aircraft traffic to Flightradar24. I love knowing that my
-              little corner of the network helps power tools used by pilots,
-              enthusiasts, and anyone curious about what's flying overhead.
-            </p>
-          </div>
+        </div>
+      </div>
+
+      <!-- Card content -->
+      <div class="p-6">
+        <h3 class="text-xl font-semibold text-text-primary mb-2">Aviation & ADS-B</h3>
+        <p class="text-text-secondary leading-relaxed mb-4">
+          I run two Raspberry Pi ADS-B receivers that feed live overhead flight data to Flightradar24 —
+          contributing to a global network used by millions. When I'm not tracking planes, I'm flying
+          (virtually) in the simulator I built in my basement. My favorite party trick: tell me your
+          flight details and I'll guess your exact plane.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-accent-primary/10 text-accent-primary border border-accent-primary/20">2× Raspberry Pi</span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-accent-primary/10 text-accent-primary border border-accent-primary/20">Flightradar24 Feeder</span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-accent-primary/10 text-accent-primary border border-accent-primary/20">Basement Flight Sim</span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-accent-primary/10 text-accent-primary border border-accent-primary/20">ADS-B</span>
         </div>
       </div>
     </div>
 
-    <!-- Interest Card 4: Weather Station -->
+    <!-- ── 3D Printing (featured, full-width) ── -->
     <div
-      class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg p-6 hover:border-border-accent transition-all duration-200"
+      class="md:col-span-2 bg-bg-card border border-border-primary rounded-xl overflow-hidden hover:border-border-accent transition-all duration-200"
     >
-      <div class="flex flex-col gap-4">
-        <div class="flex items-start gap-4">
-          <div
-            class="flex-shrink-0 w-12 h-12 rounded-lg bg-accent-primary/20 flex items-center justify-center"
-          >
-            <svg
-              class="w-6 h-6 text-accent-primary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 5h18M5 12h14M8 19h8"></path>
+      <!-- Visual banner — swap for <img src="/interests/3dprinting.jpg" ... /> -->
+      <div class="relative h-48 bg-gradient-to-br from-accent-secondary/30 via-accent-secondary/10 to-transparent flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 opacity-10"
+          style="background-image: repeating-linear-gradient(-45deg, currentColor 0, currentColor 1px, transparent 0, transparent 50%); background-size: 20px 20px;">
+        </div>
+        <svg class="w-24 h-24 text-accent-secondary opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+        </svg>
+        <div class="absolute top-4 left-4">
+          <div class="w-10 h-10 rounded-lg bg-accent-secondary/20 border border-accent-secondary/30 flex items-center justify-center">
+            <svg class="w-5 h-5 text-accent-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
             </svg>
           </div>
-          <div>
-            <h3 class="text-xl font-semibold text-text-primary mb-2">
-              Weather Station & Camera
-            </h3>
-            <p class="text-text-secondary leading-relaxed">
-              At home I operate an Ambient Weather WS-2000 station and a weather
-              camera, sharing real-time conditions with the community.
-              Contributing this data for meteorologists, local pilots, and other
-              weather nerds gives me a genuine sense of purpose and connection
-              to something bigger than myself.
-            </p>
+        </div>
+      </div>
+
+      <!-- Card content -->
+      <div class="p-6">
+        <h3 class="text-xl font-semibold text-text-primary mb-2">3D Printing & Making</h3>
+        <p class="text-text-secondary leading-relaxed mb-4">
+          From flower pots and gumball dispensers to replacement parts and a fully printed jet engine,
+          my printer is always running. I love sketching up CAD designs and turning them into real,
+          usable things. Pro tip: always prototype before committing to final dimensions.
+          Oh — and my 3D printer is technically a 3× Emmy Award recipient. The Academy approved.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20">3× Emmy Recipient</span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20">Printed Jet Engine</span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20">CAD Design</span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20">Prototyping</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Weather Station ── -->
+    <div
+      class="bg-bg-card border border-border-primary rounded-xl overflow-hidden hover:border-border-accent transition-all duration-200 flex flex-col"
+    >
+      <!-- Visual banner — swap for <img src="/interests/weather.jpg" ... /> -->
+      <div class="relative h-32 bg-gradient-to-br from-blue-500/20 via-blue-400/10 to-transparent flex items-center justify-center">
+        <svg class="w-16 h-16 text-blue-400 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+            d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+        </svg>
+        <div class="absolute top-3 left-3">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
           </div>
         </div>
       </div>
+      <div class="p-5 flex flex-col gap-3 flex-1">
+        <h3 class="text-lg font-semibold text-text-primary">Home Weather Station</h3>
+        <p class="text-text-secondary text-sm leading-relaxed">
+          I operate a personal weather station from my house, sharing live conditions with personal weather
+          networks online — helping local meteorologists and weather enthusiasts inform their forecasts.
+        </p>
+        <div class="flex flex-wrap gap-1.5 mt-auto">
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">Live Data Feed</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">PWS Networks</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Interest Card 5: Reading & Writing -->
+    <!-- ── Photography & Drone ── -->
     <div
-      class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg p-6 hover:border-border-accent transition-all duration-200"
+      class="bg-bg-card border border-border-primary rounded-xl overflow-hidden hover:border-border-accent transition-all duration-200 flex flex-col"
     >
-      <div class="flex items-start gap-4">
-        <div
-          class="flex-shrink-0 w-12 h-12 rounded-lg bg-accent-primary/20 flex items-center justify-center"
-        >
-          <svg
-            class="w-6 h-6 text-accent-primary"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-            ></path>
+      <!-- Visual banner — swap for <img src="/interests/drone.jpg" ... /> -->
+      <div class="relative h-32 bg-gradient-to-br from-purple-500/20 via-purple-400/10 to-transparent flex items-center justify-center">
+        <svg class="w-16 h-16 text-purple-400 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <div class="absolute top-3 left-3">
+          <div class="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="p-5 flex flex-col gap-3 flex-1">
+        <h3 class="text-lg font-semibold text-text-primary">Photography & Drone</h3>
+        <p class="text-text-secondary text-sm leading-relaxed">
+          I love capturing the world from angles most people never see — from sweeping drone aerials to
+          ground-level shots that make the familiar feel completely new.
+        </p>
+        <div class="flex flex-wrap gap-1.5 mt-auto">
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">Aerial Footage</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">Drone</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── National Parks Magnets (full-width, lighter) ── -->
+    <div
+      class="md:col-span-2 bg-bg-card border border-border-primary rounded-xl p-6 hover:border-border-accent transition-all duration-200"
+    >
+      <div class="flex items-center gap-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </div>
         <div>
-          <h3 class="text-xl font-semibold text-text-primary mb-2">
-            Music & Creative Projects
-          </h3>
-          <p class="text-text-secondary leading-relaxed">
-            I have a deep appreciation for music and enjoy working on creative
-            projects. I've built websites for musicians and love exploring the
-            intersection of tech and art.
+          <h3 class="text-lg font-semibold text-text-primary">National Parks Magnet Collector</h3>
+          <p class="text-text-tertiary text-sm leading-relaxed mt-0.5">
+            Every National Park I visit earns a magnet — a small tradition that doubles as a map of everywhere I've been,
+            and a growing reminder of everywhere I still want to go.
           </p>
         </div>
       </div>
     </div>
 
-    <!-- Interest Card 6 -->
-    <div
-      class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg p-6 hover:border-border-accent transition-all duration-200"
-    >
-      <div class="flex items-start gap-4">
-        <div
-          class="flex-shrink-0 w-12 h-12 rounded-lg bg-accent-primary/20 flex items-center justify-center"
-        >
-          <svg
-            class="w-6 h-6 text-accent-primary"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm6 3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM7 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
-            ></path>
-          </svg>
-        </div>
-        <div>
-          <h3 class="text-xl font-semibold text-text-primary mb-2">
-            Collaboration
-          </h3>
-          <p class="text-text-secondary leading-relaxed">
-            I thrive in collaborative environments and enjoy working with others
-            to solve complex problems. Some of my best work comes from bouncing
-            ideas off teammates and learning from different perspectives.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Interest Card 7 -->
-    <div
-      class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg p-6 hover:border-border-accent transition-all duration-200"
-    >
-      <div class="flex items-start gap-4">
-        <div
-          class="flex-shrink-0 w-12 h-12 rounded-lg bg-accent-primary/20 flex items-center justify-center"
-        >
-          <svg
-            class="w-6 h-6 text-accent-primary"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-          </svg>
-        </div>
-        <div>
-          <h3 class="text-xl font-semibold text-text-primary mb-2">
-            Side Projects
-          </h3>
-          <p class="text-text-secondary leading-relaxed">
-            I'm always working on side projects—from web apps to developer
-            tools. These projects let me experiment with new ideas and
-            technologies in a low-stakes environment.
-          </p>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
