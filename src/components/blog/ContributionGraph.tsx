@@ -113,7 +113,7 @@ export default function ContributionGraph({ totalContributions, weeks }: Props) 
             </div>
 
             {/* Tooltip */}
-            {tooltip.visible && (
+            {/* {tooltip.visible && (
               <div
                 className="absolute pointer-events-none z-50 rounded px-2 py-1 text-xs text-white whitespace-nowrap"
                 style={{
@@ -126,7 +126,7 @@ export default function ContributionGraph({ totalContributions, weeks }: Props) 
               >
                 {tooltip.content}
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
