@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
-import BlogCard from "../components/BlogCard.astro";
+import BlogCard from "../components/blog/BlogCard.astro";
 
 // Get all blog posts that aren't drafts and sort by date (with newest first)
 const allPosts = await getCollection("blog", ({ data }) => {
