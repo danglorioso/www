@@ -30,10 +30,25 @@
         <img src="/logos/tufts.jpeg" alt="Tufts University" class="w-full h-full object-cover" />
       </div>
       <div class="flex-1 min-w-0">
-        <p class="text-lg font-semibold text-text-primary leading-snug">Course Assistant — Algorithms</p>
-        <p class="text-base text-text-secondary mt-0.5">Tufts University</p>
-        <p class="text-sm text-text-tertiary mt-1">Sep 2025 – Present · <span data-start="2025-09"></span></p>
-        <p class="text-sm text-text-tertiary">Medford, Massachusetts</p>
+        <details>
+          <summary class="group">
+            <div class="flex items-center gap-1.5">
+              <p class="text-lg font-semibold text-text-primary leading-snug">Course Assistant — Algorithms</p>
+              <svg class="chevron w-4 h-4 text-text-tertiary group-hover:text-text-secondary transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+            <p class="text-base text-text-secondary mt-0.5">Tufts University</p>
+            <p class="text-sm text-text-tertiary mt-1">Sep 2025 – Present · <span data-start="2025-09"></span></p>
+            <p class="text-sm text-text-tertiary">Medford, Massachusetts</p>
+          </summary>
+          <div class="mt-2 space-y-1.5">
+            <div class="flex gap-2">
+              <span class="text-text-tertiary mt-0.5 flex-shrink-0 select-none">–</span>
+              <p class="text-base text-text-secondary leading-relaxed">Lead weekly recitations, conduct office hours, and grade over 160 students' homework and exam submissions each week.</p>
+            </div>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -167,6 +182,9 @@
                   <span class="text-text-tertiary mt-0.5 flex-shrink-0 select-none">–</span>
                   <p class="text-base text-text-secondary leading-relaxed">Spearheaded the inaugural executive board for Tufts University's CS hackathon, engaging 300+ participants from Tufts and partner universities.</p>
                 </div>
+                <div class="flex gap-2">
+                  <span class="text-text-tertiary mt-0.5 flex-shrink-0 select-none">–</span>
+                  <p class="text-base text-text-secondary leading-relaxed">Oversaw all aspects of event logistics, including sponsorship acquisition, marketing, and team management.</p>
               </div>
             </details>
           </div>
@@ -198,6 +216,14 @@
               <span class="text-text-tertiary mt-0.5 flex-shrink-0 select-none">–</span>
               <p class="text-base text-text-secondary leading-relaxed">Create and operate profit-earning e-commerce websites using Liquid, HTML, and CSS.</p>
             </div>
+            <div class="flex gap-2">
+              <span class="text-text-tertiary mt-0.5 flex-shrink-0 select-none">–</span>
+              <p class="text-base text-text-secondary leading-relaxed">Analyze and execute real-time analytics and budget marketing campaigns on platforms, including Google Ads, to optimize customer conversions.</p>
+            </div>
+            <div class="flex gap-2">
+              <span class="text-text-tertiary mt-0.5 flex-shrink-0 select-none">–</span>
+              <p class="text-base text-text-secondary leading-relaxed">Collaborate with third-party developers on supplementary website customization features for increased customer personalization.</p>
+            </div>
           </div>
         </details>
       </div>
@@ -227,7 +253,10 @@
               <span class="text-text-tertiary mt-0.5 flex-shrink-0 select-none">–</span>
               <p class="text-base text-text-secondary leading-relaxed">Operate sound and light boards for speakers and presenters, theatre productions, and live music events.</p>
             </div>
-          </div>
+            <div class="flex gap-2">
+              <span class="text-text-tertiary mt-0.5 flex-shrink-0 select-none">–</span>
+              <p class="text-base text-text-secondary leading-relaxed">Train new technicians on equipment operation, technical skills, and company protocols; front-of-house for renting clients.</p>
+            </div>
         </details>
       </div>
     </div>
@@ -256,7 +285,8 @@
 <script>
   function formatDuration(startStr: string, endStr?: string): string {
     const [startYear, startMonth] = startStr.split('-').map(Number);
-    const end = endStr ? (() => { const [y, m] = endStr.split('-').map(Number); return new Date(y, m - 1); })() : new Date();
+    const now = new Date();
+    const end = endStr ? (() => { const [y, m] = endStr.split('-').map(Number); return new Date(y, m - 1); })() : new Date(now.getFullYear(), now.getMonth() + 1);
 
     let years = end.getFullYear() - startYear;
     let months = end.getMonth() + 1 - startMonth;
