@@ -32,7 +32,7 @@
       <div class="flex-1 min-w-0">
         <p class="text-lg font-semibold text-text-primary leading-snug">Course Assistant — Algorithms</p>
         <p class="text-base text-text-secondary mt-0.5">Tufts University</p>
-        <p class="text-sm text-text-tertiary mt-1">Sep 2025 – Present · 7 mos</p>
+        <p class="text-sm text-text-tertiary mt-1">Sep 2025 – Present · <span data-start="2025-09"></span></p>
         <p class="text-sm text-text-tertiary">Medford, Massachusetts</p>
       </div>
     </div>
@@ -44,7 +44,7 @@
       </div>
       <div class="flex-1 min-w-0">
         <p class="text-lg font-semibold text-text-primary leading-snug">Tufts JumboCode</p>
-        <p class="text-sm text-text-tertiary mt-1">Sep 2023 – Present · 2 yrs 7 mos</p>
+        <p class="text-sm text-text-tertiary mt-1">Sep 2023 – Present · <span data-start="2023-09"></span></p>
         <p class="text-sm text-text-tertiary">Medford, Massachusetts</p>
 
         <div class="mt-4 sm:mt-5 flex flex-col">
@@ -61,7 +61,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                   </svg>
                 </div>
-                <p class="text-sm text-text-tertiary mt-0.5">May 2025 – Present · 11 mos</p>
+                <p class="text-sm text-text-tertiary mt-0.5">May 2025 – Present · <span data-start="2025-05"></span></p>
               </summary>
               <div class="mt-2 space-y-1.5">
                 <div class="flex gap-2">
@@ -84,7 +84,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                   </svg>
                 </div>
-                <p class="text-sm text-text-tertiary mt-0.5">Apr 2025 – Present · 1 yr</p>
+                <p class="text-sm text-text-tertiary mt-0.5">Apr 2025 – Present · <span data-start="2025-04"></span></p>
               </summary>
               <div class="mt-2 space-y-1.5">
                 <div class="flex gap-2">
@@ -106,7 +106,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                   </svg>
                 </div>
-                <p class="text-sm text-text-tertiary mt-0.5">Sep 2023 – May 2025 · 1 yr 9 mos</p>
+                <p class="text-sm text-text-tertiary mt-0.5">Sep 2023 – May 2025 · <span data-start="2023-09" data-end="2025-05"></span></p>
               </summary>
               <div class="mt-2 space-y-1.5">
                 <div class="flex gap-2">
@@ -136,7 +136,7 @@
       </div>
       <div class="flex-1 min-w-0">
         <p class="text-lg font-semibold text-text-primary leading-snug">Tufts JumboHack</p>
-        <p class="text-sm text-text-tertiary mt-1">Apr 2024 – Present · 2 yrs</p>
+        <p class="text-sm text-text-tertiary mt-1">Apr 2024 – Present · <span data-start="2024-04"></span></p>
         <p class="text-sm text-text-tertiary">Medford, Massachusetts</p>
 
         <div class="mt-4 sm:mt-5 flex flex-col">
@@ -146,7 +146,7 @@
             <div class="absolute left-0 top-2 w-2.5 h-2.5 rounded-full bg-accent-primary"></div>
             <div class="absolute left-[4px] top-[18px] bottom-0 w-px bg-border-secondary"></div>
             <p class="text-base font-semibold text-text-primary">Senior Director</p>
-            <p class="text-sm text-text-tertiary mt-0.5">May 2025 – Present · 11 mos</p>
+            <p class="text-sm text-text-tertiary mt-0.5">May 2025 – Present · <span data-start="2025-05"></span></p>
           </div>
 
           <!-- Role 2 (last) -->
@@ -160,7 +160,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                   </svg>
                 </div>
-                <p class="text-sm text-text-tertiary mt-0.5">Apr 2024 – May 2025 · 1 yr 2 mos</p>
+                <p class="text-sm text-text-tertiary mt-0.5">Apr 2024 – May 2025 · <span data-start="2024-04" data-end="2025-05"></span></p>
               </summary>
               <div class="mt-2 space-y-1.5">
                 <div class="flex gap-2">
@@ -190,7 +190,7 @@
               </svg>
             </div>
             <p class="text-base text-text-secondary mt-0.5">Battery Eliminator Store</p>
-            <p class="text-sm text-text-tertiary mt-1">Jul 2019 – Present · 6 yrs 9 mos</p>
+            <p class="text-sm text-text-tertiary mt-1">Jul 2019 – Present · <span data-start="2019-07"></span></p>
             <p class="text-sm text-text-tertiary">Massachusetts</p>
           </summary>
           <div class="mt-2 space-y-1.5">
@@ -219,7 +219,7 @@
               </svg>
             </div>
             <p class="text-base text-text-secondary mt-0.5">Littleton Performing Arts Center</p>
-            <p class="text-sm text-text-tertiary mt-1">Apr 2019 – Present · 7 yrs</p>
+            <p class="text-sm text-text-tertiary mt-1">Apr 2019 – Present · <span data-start="2019-04"></span></p>
             <p class="text-sm text-text-tertiary">Littleton, Massachusetts</p>
           </summary>
           <div class="mt-2 space-y-1.5">
@@ -252,3 +252,23 @@
     </a>
   </div>
 </div>
+
+<script>
+  function formatDuration(startStr: string, endStr?: string): string {
+    const [startYear, startMonth] = startStr.split('-').map(Number);
+    const end = endStr ? (() => { const [y, m] = endStr.split('-').map(Number); return new Date(y, m - 1); })() : new Date();
+
+    let years = end.getFullYear() - startYear;
+    let months = end.getMonth() + 1 - startMonth;
+    if (months < 0) { years--; months += 12; }
+
+    const parts: string[] = [];
+    if (years > 0) parts.push(`${years} yr${years !== 1 ? 's' : ''}`);
+    if (months > 0) parts.push(`${months} mo${months !== 1 ? 's' : ''}`);
+    return parts.length ? parts.join(' ') : '< 1 mo';
+  }
+
+  document.querySelectorAll<HTMLElement>('span[data-start]').forEach(el => {
+    el.textContent = formatDuration(el.dataset.start!, el.dataset.end);
+  });
+</script>
