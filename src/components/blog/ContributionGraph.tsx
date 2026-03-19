@@ -72,62 +72,62 @@ export default function ContributionGraph({ totalContributions, weeks }: Props) 
 
   return (
     <div className="not-prose my-6">
-      <div className="bg-slate-950 rounded-lg p-4 overflow-x-auto">
-        {/* Month labels + grid */}
-        <div className="flex justify-center">
-        <div ref={gridRef} className="relative inline-block" style={{ minWidth: "fit-content" }}>
-          {/* Month labels row */}
-          <div className="relative mb-1" style={{ height: "14px" }}>
-            {monthLabels.map(({ label, col }) => (
-              <span
-                key={label + col}
-                className="absolute text-xs text-slate-400"
-                style={{ left: `${col * step}px`, whiteSpace: "nowrap" }}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-
-          {/* Week columns */}
-          <div className="flex" style={{ gap: `${gap}px` }}>
-            {weeks.map((week, wi) => (
-              <div key={wi} className="flex flex-col" style={{ gap: `${gap}px` }}>
-                {week.contributionDays.map((day) => (
-                  <div
-                    key={day.date}
-                    style={{
-                      width: cellSize,
-                      height: cellSize,
-                      borderRadius: 2,
-                      backgroundColor: getColor(day.contributionCount),
-                      cursor: "pointer",
-                      flexShrink: 0,
-                    }}
-                    onMouseEnter={(e) => handleMouseEnter(e, day)}
-                    onMouseLeave={handleMouseLeave}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-
-        </div>
-          {/* Tooltip */}
-          {tooltip.visible && (
-            <div
-              className="absolute pointer-events-none z-50 rounded px-2 py-1 text-xs text-white whitespace-nowrap"
-              style={{
-                backgroundColor: "rgba(0,0,0,0.85)",
-                left: tooltip.x,
-                top: tooltip.y - 8,
-                transform: "translate(-50%, -100%)",
-                border: "1px solid #334155",
-              }}
-            >
-              {tooltip.content}
+      <div className="bg-slate-950 rounded-lg p-4">
+        {/* Scrollable grid — footer stays outside and anchored */}
+        <div className="overflow-x-auto">
+          <div ref={gridRef} className="relative inline-block">
+            {/* Month labels row */}
+            <div className="relative mb-1" style={{ height: "14px" }}>
+              {monthLabels.map(({ label, col }) => (
+                <span
+                  key={label + col}
+                  className="absolute text-xs text-slate-400"
+                  style={{ left: `${col * step}px`, whiteSpace: "nowrap" }}
+                >
+                  {label}
+                </span>
+              ))}
             </div>
-          )}
+
+            {/* Week columns */}
+            <div className="flex" style={{ gap: `${gap}px` }}>
+              {weeks.map((week, wi) => (
+                <div key={wi} className="flex flex-col" style={{ gap: `${gap}px` }}>
+                  {week.contributionDays.map((day) => (
+                    <div
+                      key={day.date}
+                      style={{
+                        width: cellSize,
+                        height: cellSize,
+                        borderRadius: 2,
+                        backgroundColor: getColor(day.contributionCount),
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={(e) => handleMouseEnter(e, day)}
+                      onMouseLeave={handleMouseLeave}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Tooltip */}
+            {tooltip.visible && (
+              <div
+                className="absolute pointer-events-none z-50 rounded px-2 py-1 text-xs text-white whitespace-nowrap"
+                style={{
+                  backgroundColor: "rgba(0,0,0,0.85)",
+                  left: tooltip.x,
+                  top: tooltip.y - 8,
+                  transform: "translate(-50%, -100%)",
+                  border: "1px solid #334155",
+                }}
+              >
+                {tooltip.content}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer */}

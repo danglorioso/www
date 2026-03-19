@@ -41,7 +41,7 @@ const getColor = (count: number) => {
         <div id="tooltip-content"></div>
       </div>
 
-      <div class="flex flex-col sm:flex-row flex-col-reverse sm:justify-between items-center gap-4 mt-4 mx-2">
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4 mt-4 mx-2">
         <div class="flex flex-row items-center justify-start sm:justify-center">
           <a
             href="https://danglorioso.com/github"
@@ -167,6 +167,7 @@ const getColor = (count: number) => {
       </div>
     `).join('');
     gridContainer.innerHTML = weeksHtml;
+    gridContainer.scrollLeft = gridContainer.scrollWidth;
     try { initTooltip(); } catch (_) {}
   }
 

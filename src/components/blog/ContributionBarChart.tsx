@@ -20,12 +20,12 @@ export default function ContributionBarChart({
   const yMax = Math.ceil(maxValue / 100) * 100;
   const yTicks = Array.from({ length: yMax / 100 + 1 }, (_, i) => i * 100);
 
-  const paddingLeft = 52;
-  const paddingRight = 16;
-  const paddingTop = 32;
-  const paddingBottom = 86;
-  const chartWidth = 760;
-  const chartHeight = 440;
+  const paddingLeft = 64;
+  const paddingRight = 20;
+  const paddingTop = 36;
+  const paddingBottom = 100;
+  const chartWidth = 780;
+  const chartHeight = 500;
   const innerWidth = chartWidth - paddingLeft - paddingRight;
   const innerHeight = chartHeight - paddingTop - paddingBottom;
 
@@ -39,7 +39,7 @@ export default function ContributionBarChart({
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
           className="w-full max-w-2xl mx-auto block"
-          style={{ minWidth: "320px", overflow: "visible" }}
+          style={{ minWidth: "680px" }}
         >
           {/* Y-axis gridlines and labels */}
           {yTicks.map((tick) => {
@@ -55,11 +55,11 @@ export default function ContributionBarChart({
                   strokeWidth="1"
                 />
                 <text
-                  x={paddingLeft - 6}
+                  x={paddingLeft - 8}
                   y={y}
                   textAnchor="end"
                   dominantBaseline="middle"
-                  fontSize="11"
+                  fontSize="13"
                   fill="#94a3b8"
                 >
                   {tick}
@@ -106,10 +106,10 @@ export default function ContributionBarChart({
                 {isHovered && (
                   <g>
                     <rect
-                      x={x + barWidth / 2 - 26}
-                      y={y - 28}
-                      width={52}
-                      height={22}
+                      x={x + barWidth / 2 - 28}
+                      y={y - 30}
+                      width={56}
+                      height={24}
                       rx="4"
                       fill="#1e293b"
                       stroke="#4ade80"
@@ -119,7 +119,7 @@ export default function ContributionBarChart({
                       x={x + barWidth / 2}
                       y={y - 14}
                       textAnchor="middle"
-                      fontSize="11"
+                      fontSize="13"
                       fontWeight="600"
                       fill="#4ade80"
                     >
@@ -131,13 +131,13 @@ export default function ContributionBarChart({
                 {/* X-axis label */}
                 <text
                   x={x + barWidth / 2}
-                  y={paddingTop + innerHeight + 32}
+                  y={paddingTop + innerHeight + 36}
                   textAnchor="middle"
-                  fontSize="11"
+                  fontSize="13"
                   fill="#94a3b8"
                   transform={
                     d.label.length > 5
-                      ? `rotate(-35, ${x + barWidth / 2}, ${paddingTop + innerHeight + 14})`
+                      ? `rotate(-35, ${x + barWidth / 2}, ${paddingTop + innerHeight + 18})`
                       : undefined
                   }
                 >
@@ -152,7 +152,7 @@ export default function ContributionBarChart({
             x={14}
             y={paddingTop + innerHeight / 2}
             textAnchor="middle"
-            fontSize="11"
+            fontSize="13"
             fill="#94a3b8"
             transform={`rotate(-90, 14, ${paddingTop + innerHeight / 2})`}
           >
@@ -162,9 +162,9 @@ export default function ContributionBarChart({
           {/* X-axis label */}
           <text
             x={paddingLeft + innerWidth / 2}
-            y={chartHeight - 14}
+            y={chartHeight - 28}
             textAnchor="middle"
-            fontSize="11"
+            fontSize="13"
             fill="#94a3b8"
           >
             {xAxisLabel}
