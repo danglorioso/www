@@ -98,7 +98,7 @@ const categories = Array.from(categorySet).sort();
 
       <!-- Results Count (hidden by default, shown when filtering) -->
       <div id="results-count" class="text-sm text-text-secondary hidden">
-        Showing <span id="results-number">0</span> project <span id="results-label"></span>.
+        Showing <span id="results-number">0</span> project <span id="results-label"></span>. <button id="reset-filter" class="text-accent-primary hover:underline">Reset.</button>
       </div>
 
       <!-- Projects List -->
@@ -224,6 +224,12 @@ const categories = Array.from(categorySet).sort();
 
       searchInput?.addEventListener("input", filterProjects);
       categoryFilter?.addEventListener("change", filterProjects);
+
+      document.getElementById("reset-filter")?.addEventListener("click", () => {
+        (searchInput as HTMLInputElement).value = "";
+        (categoryFilter as HTMLSelectElement).value = "";
+        filterProjects();
+      });
 
       // ── Expand/collapse logic ─────────────────────────────────────────────
       document.addEventListener("click", (e) => {
