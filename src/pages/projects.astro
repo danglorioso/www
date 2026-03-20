@@ -158,10 +158,10 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
   </section>
 
   <!-- Project Modals -->
-  <!-- Overlay is the scroll container AND backdrop; clicking it (outside the panel) closes the modal -->
+  <!-- Modal is full-viewport; header sits above it at z-[250] and is forced visible when open -->
   <div id="project-modal-overlay" class="fixed inset-0 z-[200] hidden overflow-y-auto bg-black/70 backdrop-blur-sm" aria-modal="true" role="dialog">
-    <!-- Centering wrapper — min-h-full so clicking empty space below the panel still hits the overlay -->
-    <div class="flex min-h-full items-center justify-center p-6">
+    <!-- pt-24 keeps the panel below the header (h-20 + breathing room) -->
+    <div class="flex min-h-full items-start justify-center p-6 pt-24">
       {renderedProjects.map(({ project, Content }) => {
         const s = project.data;
         const st = statusConfig[s.status] || statusConfig["in-progress"];
@@ -407,6 +407,12 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
       // and renders above the header, footer, and mobile menu.
       document.body.appendChild(modal);
 
+      const backToTop = document.getElementById("back-to-top");
+      const header = document.getElementById("main-header");
+      // Track header state before modal opens so we can restore it on close
+      let preModalHeaderPosition = "";
+      let preModalHeaderTransform = "";
+
       function openModal(slug: string) {
         document.querySelectorAll(".modal-panel").forEach((el) => el.classList.add("hidden"));
         const panel = document.getElementById(`modal-${slug}`);
@@ -414,9 +420,40 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
         panel.classList.remove("hidden");
         modal.classList.remove("hidden");
         modal.scrollTop = 0;
-        // Lock page scroll on both html and body
         document.documentElement.style.overflow = "hidden";
         document.body.style.overflow = "hidden";
+        if (backToTop) backToTop.style.display = "none";
+        // Force header visible so it always frames the modal
+        if (header) {
+          preModalHeaderPosition = header.style.position;
+          preModalHeaderTransform = header.style.transform;
+          const alreadyVisible = header.getBoundingClientRect().bottom > 0
+            && header.style.transform !== "translateY(-100%)";
+          if (!alreadyVisible) {
+            // Header is off-screen — snap above viewport then slide in
+            header.style.transition = "none";
+            header.style.position = "fixed";
+            header.style.top = "0";
+            header.style.left = "0";
+            header.style.right = "0";
+            header.style.transform = "translateY(-100%)";
+            void header.offsetHeight;
+            header.style.transition = "";
+            header.style.transform = "translateY(0)";
+          } else if (header.style.position !== "fixed") {
+            // Visible but absolute — freeze it as fixed so body-lock doesn't affect it
+            header.style.transition = "none";
+            header.style.position = "fixed";
+            header.style.top = "0";
+            header.style.left = "0";
+            header.style.right = "0";
+            header.style.transform = "translateY(0)";
+            requestAnimationFrame(() => { header.style.transition = ""; });
+          } else {
+            // Already fixed and visible — slide in if it was hiding
+            header.style.transform = "translateY(0)";
+          }
+        }
       }
 
       function closeModal() {
@@ -424,6 +461,23 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
         document.querySelectorAll(".modal-panel").forEach((el) => el.classList.add("hidden"));
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
+        if (backToTop) backToTop.style.display = "";
+        // Restore header to its pre-modal state
+        if (header) {
+          if (preModalHeaderPosition !== "fixed") {
+            // Was absolute before — restore immediately (scroll handler takes over)
+            header.style.transition = "none";
+            header.style.position = preModalHeaderPosition;
+            header.style.top = "";
+            header.style.left = "";
+            header.style.right = "";
+            header.style.transform = preModalHeaderTransform;
+            requestAnimationFrame(() => { header.style.transition = ""; });
+          } else {
+            // Was fixed — animate back to its pre-modal transform (visible or hidden)
+            header.style.transform = preModalHeaderTransform;
+          }
+        }
       }
 
       // Open modal when a project card is clicked
