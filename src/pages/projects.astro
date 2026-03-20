@@ -413,7 +413,7 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
       let preModalHeaderTransform = "";
       let preModalWasVisible = false;
 
-      function openModal(slug: string) {
+      function openModal(slug: string, pushState = true) {
         document.querySelectorAll(".modal-panel").forEach((el) => el.classList.add("hidden"));
         const panel = document.getElementById(`modal-${slug}`);
         if (!panel) return;
@@ -423,6 +423,7 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
         document.documentElement.style.overflow = "hidden";
         document.body.style.overflow = "hidden";
         if (backToTop) backToTop.style.display = "none";
+        if (pushState) history.pushState({ modal: slug }, "", `/projects/${slug}`);
         (window as any).__modalOpen = true;
         if (header) {
           preModalHeaderPosition = header.style.position;
@@ -452,9 +453,10 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
         }
       }
 
-      function closeModal() {
+      function closeModal(replaceState = true) {
         modal.classList.add("hidden");
         document.querySelectorAll(".modal-panel").forEach((el) => el.classList.add("hidden"));
+        if (replaceState) history.replaceState({}, "", "/projects");
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
         if (backToTop) backToTop.style.display = "";
@@ -490,6 +492,14 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
         (window as any).__modalOpen = false;
       }
 
+      // Open modal from URL query param (redirected from /projects/[slug])
+      const openSlug = new URLSearchParams(window.location.search).get("open");
+      if (openSlug) {
+        // Replace the ?open=slug URL with the clean /projects/slug form
+        history.replaceState({ modal: openSlug }, "", `/projects/${openSlug}`);
+        openModal(openSlug, false);
+      }
+
       // Open modal when a project card is clicked
       document.querySelectorAll("[data-modal-slug]").forEach((card) => {
         card.addEventListener("click", () => {
@@ -505,13 +515,22 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
 
       // Close on close button click
       document.querySelectorAll(".modal-close").forEach((btn) => {
-        btn.addEventListener("click", closeModal);
+        btn.addEventListener("click", () => closeModal());
       });
 
       // Close on Escape key
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && !modal.classList.contains("hidden")) {
           closeModal();
+        }
+      });
+
+      // Handle browser back button (popstate) — close modal without pushing another state
+      window.addEventListener("popstate", (e) => {
+        if (!modal.classList.contains("hidden")) {
+          closeModal(false);
+        } else if ((e.state as any)?.modal) {
+          openModal((e.state as any).modal, false);
         }
       });
     })();
