@@ -63,12 +63,13 @@ const currentStatus = statusConfig[status] || statusConfig["in-progress"];
 ---
 
 <div
-  class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg flex flex-col p-4 gap-3 hover:border-border-accent transition-all duration-200"
+  class="bg-bg-card backdrop-blur-sm border border-border-primary rounded-lg flex flex-col p-4 gap-3 hover:border-border-accent transition-all duration-200 cursor-pointer group"
+  data-modal-slug={slug}
 >
   <!-- Header with Favicon, Title and Status -->
-  <a href={``} class="group block cursor-pointer">
+  <div class="block">
     <div class="flex items-center justify-between mb-3">
-      <!-- mb-3 workaround to account for gap-3 not working with <a> tag -->
+      <!-- mb-3 workaround to account for gap-3 not working with flex container -->
       <div class="flex flex-1 items-center gap-3 min-w-0">
         <!-- Favicon -->
         {
@@ -115,7 +116,7 @@ const currentStatus = statusConfig[status] || statusConfig["in-progress"];
     <p class="text-text-secondary text-md leading-relaxed">
       {description}
     </p>
-  </a>
+  </div>
 
   <!-- Tech Stack -->
   <div class="flex flex-wrap gap-2">
@@ -156,6 +157,7 @@ const currentStatus = statusConfig[status] || statusConfig["in-progress"];
               target="_blank"
               rel="noopener noreferrer"
               class="flex items-center gap-1.5 text-xs text-text-secondary hover:text-accent-primary transition-colors"
+              onclick="event.stopPropagation()"
             >
               <svg
                 class="w-4 h-4"
@@ -178,6 +180,7 @@ const currentStatus = statusConfig[status] || statusConfig["in-progress"];
               target="_blank"
               rel="noopener noreferrer"
               class="flex items-center gap-1.5 text-xs text-text-secondary hover:text-accent-primary transition-colors"
+              onclick="event.stopPropagation()"
             >
               <svg
                 class="w-4 h-4"
