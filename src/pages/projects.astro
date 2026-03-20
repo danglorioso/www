@@ -237,6 +237,17 @@ const categories = Array.from(categorySet).sort();
         e.preventDefault();
         (searchInput as HTMLInputElement)?.focus();
       });
+
+      // Press Escape to clear search and reset filters
+      searchInput?.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        const input = searchInput as HTMLInputElement;
+        const select = categoryFilter as HTMLSelectElement;
+        input.value = "";
+        select.value = "";
+        input.blur();
+        filterProjects();
+      });
     })();
   </script>
 </Layout>
