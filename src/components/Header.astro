@@ -191,6 +191,9 @@ import NavBar from "./NavBar.astro";
     let isHeaderFixed = false;
 
     function updateHeader() {
+      // Let the modal control the header while it's open
+      if (window.__modalOpen) { ticking = false; return; }
+
       const currentScrollY = window.scrollY;
       const scrollingDown = currentScrollY > lastScrollY;
 

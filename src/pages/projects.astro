@@ -409,9 +409,9 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
 
       const backToTop = document.getElementById("back-to-top");
       const header = document.getElementById("main-header");
-      // Track header state before modal opens so we can restore it on close
       let preModalHeaderPosition = "";
       let preModalHeaderTransform = "";
+      let preModalWasVisible = false;
 
       function openModal(slug: string) {
         document.querySelectorAll(".modal-panel").forEach((el) => el.classList.add("hidden"));
@@ -423,35 +423,31 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
         document.documentElement.style.overflow = "hidden";
         document.body.style.overflow = "hidden";
         if (backToTop) backToTop.style.display = "none";
-        // Force header visible so it always frames the modal
+        (window as any).__modalOpen = true;
         if (header) {
           preModalHeaderPosition = header.style.position;
           preModalHeaderTransform = header.style.transform;
-          const alreadyVisible = header.getBoundingClientRect().bottom > 0
-            && header.style.transform !== "translateY(-100%)";
-          if (!alreadyVisible) {
-            // Header is off-screen — snap above viewport then slide in
-            header.style.transition = "none";
-            header.style.position = "fixed";
-            header.style.top = "0";
-            header.style.left = "0";
-            header.style.right = "0";
+          // Use actual viewport visibility — not transform string — as the source of truth.
+          // An absolute header scrolled off-screen has transform="" but is not visible.
+          preModalWasVisible = header.getBoundingClientRect().bottom > 0;
+          header.style.transition = "none";
+          header.style.position = "fixed";
+          header.style.top = "0";
+          header.style.left = "0";
+          header.style.right = "0";
+          if (!preModalWasVisible) {
+            // Off-screen: snap above viewport then slide in
             header.style.transform = "translateY(-100%)";
             void header.offsetHeight;
-            header.style.transition = "";
-            header.style.transform = "translateY(0)";
-          } else if (header.style.position !== "fixed") {
-            // Visible but absolute — freeze it as fixed so body-lock doesn't affect it
-            header.style.transition = "none";
-            header.style.position = "fixed";
-            header.style.top = "0";
-            header.style.left = "0";
-            header.style.right = "0";
-            header.style.transform = "translateY(0)";
-            requestAnimationFrame(() => { header.style.transition = ""; });
+            requestAnimationFrame(() => {
+              header.style.transition = "";
+              header.style.transform = "translateY(0)";
+            });
           } else {
-            // Already fixed and visible — slide in if it was hiding
+            // Already visible: freeze in place, no animation
             header.style.transform = "translateY(0)";
+            void header.offsetHeight;
+            header.style.transition = "";
           }
         }
       }
@@ -462,22 +458,36 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; l
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
         if (backToTop) backToTop.style.display = "";
-        // Restore header to its pre-modal state
         if (header) {
-          if (preModalHeaderPosition !== "fixed") {
-            // Was absolute before — restore immediately (scroll handler takes over)
+          if (!preModalWasVisible) {
+            // Header was off-screen before — slide it back out, then restore inline styles
+            header.style.transition = "";
+            header.style.transform = "translateY(-100%)";
+            header.addEventListener("transitionend", () => {
+              header.style.transition = "none";
+              header.style.position = preModalHeaderPosition;
+              header.style.top = "";
+              header.style.left = "";
+              header.style.right = "";
+              header.style.transform = preModalHeaderTransform;
+              void header.offsetHeight;
+              header.style.transition = "";
+              (window as any).__modalOpen = false;
+            }, { once: true });
+            return;
+          } else {
+            // Header was visible — restore its position type silently
             header.style.transition = "none";
             header.style.position = preModalHeaderPosition;
             header.style.top = "";
             header.style.left = "";
             header.style.right = "";
             header.style.transform = preModalHeaderTransform;
-            requestAnimationFrame(() => { header.style.transition = ""; });
-          } else {
-            // Was fixed — animate back to its pre-modal transform (visible or hidden)
-            header.style.transform = preModalHeaderTransform;
+            void header.offsetHeight;
+            header.style.transition = "";
           }
         }
+        (window as any).__modalOpen = false;
       }
 
       // Open modal when a project card is clicked
