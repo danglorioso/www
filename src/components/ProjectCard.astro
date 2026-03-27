@@ -2,7 +2,7 @@
 interface Props {
   slug: string;
   title: string;
-  description: string;
+  summary: string;
   status: "completed" | "in-progress" | "planned" | "archived";
   technologies: string[];
   categories?: string[];
@@ -20,7 +20,7 @@ interface Props {
 const {
   slug = "",
   title = "",
-  description = "",
+  summary = "",
   status = "in-progress",
   technologies = [],
   featured = false,
@@ -114,7 +114,7 @@ const currentStatus = statusConfig[status] || statusConfig["in-progress"];
 
     <!-- Description -->
     <p class="text-text-secondary text-md leading-relaxed">
-      {description}
+      {summary}
     </p>
   </div>
 

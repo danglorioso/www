@@ -1,6 +1,6 @@
 ---
 title: "METAR Aviation Weather Decoder"
-description: "An educational aviation weather tool for decoding Meterological Aerodome Reports (METAR) into human-readable translations with hover tooltips and real-time data integration from any ICAO airport code in the world."
+summary: "An educational aviation weather tool for decoding Meterological Aerodome Reports (METAR) into human-readable translations with hover tooltips and real-time data integration from any ICAO airport code in the world."
 startDate: 2025-07-29
 endDate: 2025-09-04
 status: "completed"

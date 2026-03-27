@@ -1,6 +1,6 @@
 ---
 title: "Plane Compare Aircraft Database"
-description: "A comprehensive aircraft comparison platform enabling detailed analysis of specifications, performance metrics, and operational characteristics across thousands of aircraft models for aviation professionals and enthusiasts."
+summary: "A comprehensive aircraft comparison platform enabling detailed analysis of specifications, performance metrics, and operational characteristics across thousands of aircraft models for aviation professionals and enthusiasts."
 startDate: 2024-09-01
 status: "planned"
 technologies: ["React", "TypeScript", "PostgreSQL", "GraphQL", "Next.js", "Chart.js", "Aviation APIs"]

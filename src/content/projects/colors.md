@@ -1,6 +1,6 @@
 ---
 title: "Colors - Tailwind CSS Color Palette Matcher"
-description: "A simple tool for finding the closest Tailwind CSS color to any given color input. Supports various color formats including HEX, RGB, HSL, LAB, HTML, and more."
+summary: "A simple tool for finding the closest Tailwind CSS color to any given color input. Supports various color formats including HEX, RGB, HSL, LAB, HTML, and more."
 startDate: 2026-01-08
 status: "completed"
 technologies: ["Svelte", "Vite", "Tailwind CSS", "Culori", "Node.js"]

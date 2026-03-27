@@ -1,6 +1,6 @@
 ---
 title: "ADS-B Live Flight Map"
-description: "A self-hosted real-time ADS-B flight tracking system that runs on a Raspberry Pi, decodes aircraft broadcast signals, and streams live telemetry data to a browser-based interactive map via WebSocket."
+summary: "A self-hosted real-time ADS-B flight tracking system that runs on a Raspberry Pi, decodes aircraft broadcast signals, and streams live telemetry data to a browser-based interactive map via WebSocket."
 startDate: 2026-03-14
 status: "in-progress"
 technologies: ["Raspberry Pi", "Software Defined Radio (SDR)", "ADS-B / Mode S", "Node.js (Express)", "Cloudflare Tunnel", "WebSocket", "Leaflet" ]

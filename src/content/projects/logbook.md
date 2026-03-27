@@ -1,6 +1,6 @@
 ---
 title: "Logbook - Flight Tracking Network for Simulation Pilots"
-description: "A social network for flight simulator enthusiasts to track and share their flights with other pilots."
+summary: "A social network for flight simulator enthusiasts to track and share their flights with other pilots."
 startDate: 2025-12-21
 status: "in-progress"
 technologies: ["React", "TypeScript", "Node.js", "PostgreSQL", "Mapbox", "Tailwind CSS"]

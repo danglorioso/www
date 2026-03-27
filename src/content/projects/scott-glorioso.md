@@ -1,6 +1,6 @@
 ---
 title: "Scott Glorioso Website"
-description: "A musician portfolio website featuring album, song, and performance details with a scalable design."
+summary: "A musician portfolio website featuring album, song, and performance details with a scalable design."
 startDate: 2025-01-08
 endDate: 2025-07-14
 status: "completed"

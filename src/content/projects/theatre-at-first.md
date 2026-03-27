@@ -1,6 +1,6 @@
 ---
 title: "Theatre@FIRST"
-description: "An inventory management system for Theatre@FIRST—a community theatre in Somerville, MA—to track costumes, props, and furniture with photo uploads, location tracking, and condition monitoring. Created on a team of 10 developers."
+summary: "An inventory management system for Theatre@FIRST—a community theatre in Somerville, MA—to track costumes, props, and furniture with photo uploads, location tracking, and condition monitoring. Created on a team of 10 developers."
 startDate: 2023-09-02
 endDate: 2024-05-15
 status: "completed"

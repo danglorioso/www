@@ -23,7 +23,8 @@ const projects = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    description: z.string(),
+    summary: z.string(),
+    description: z.string().optional(),
     startDate: z.date(),
     endDate: z.date().optional(),
     status: z.enum(['completed', 'in-progress', 'planned', 'archived']).default('completed'),

@@ -1,6 +1,6 @@
 ---
 title: "Somerville Museum"
-description: "A web application for the Somerville Museum to catalog, search, and manage their collection of historical clothing items with advanced filtering and display capabilities. Created on a team of 10 developers."
+summary: "A web application for the Somerville Museum to catalog, search, and manage their collection of historical clothing items with advanced filtering and display capabilities. Created on a team of 10 developers."
 startDate: 2024-09-02
 endDate: 2025-05-15
 status: "completed"

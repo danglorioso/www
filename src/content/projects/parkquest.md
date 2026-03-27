@@ -1,6 +1,6 @@
 ---
 title: "ParkQuest - National Park Tracker"
-description: "A web app for tracking the US National Parks you've visited, and for sharing your experiences with other adventurers."
+summary: "A web app for tracking the US National Parks you've visited, and for sharing your experiences with other adventurers."
 startDate: 2025-12-27
 status: "in-progress"
 technologies: ["React", "TypeScript", "Node.js", "Leaflet", "PostgreSQL", "Drizzle ORM"]

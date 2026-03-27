@@ -1,6 +1,6 @@
 ---
 title: "Header Hero VSCode Extension"
-description: "A Visual Studio Code extension that automatically generates customizable file headers with smart templates that extract metadata from all files in a directory. Used by 100+ users."
+summary: "A Visual Studio Code extension that automatically generates customizable file headers with smart templates that extract metadata from all files in a directory. Used by 100+ users."
 startDate: 2024-05-01
 endDate: 2024-07-15
 status: "completed"

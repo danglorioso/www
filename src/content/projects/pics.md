@@ -1,6 +1,6 @@
 ---
 title: "Dan's Pictures Photography Portfolio"
-description: "A photography portfolio with advanced metadata display, EXIF data integration, and responsive gallery layouts."
+summary: "A photography portfolio with advanced metadata display, EXIF data integration, and responsive gallery layouts."
 startDate: 2024-07-24
 status: "in-progress"
 technologies: ["React", "TypeScript", "Next.js", "Cloudinary", "EXIF.js", "Tailwind CSS", "Framer Motion"]

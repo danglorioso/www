@@ -1,6 +1,6 @@
 ---
 title: "Massachusetts History Day"
-description: "A data visualization web application for Massachusetts Historical Society to track annual student participation. Features line/bar charts and heatmaps. Led as project manager, built for JumboCode project."
+summary: "A data visualization web application for Massachusetts Historical Society to track annual student participation. Features line/bar charts and heatmaps. Led as project manager, built for JumboCode project."
 startDate: 2025-09-05
 status: "in-progress"
 technologies: ["React", "Next.js", "TypeScript", "D3.js", "MapLibre", "Tailwind CSS", "Vercel", "Drizzle ORM"]

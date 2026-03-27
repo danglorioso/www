@@ -1,6 +1,6 @@
 ---
 title: "Track Record Upload System"
-description: "An intelligent web application that automatically detects, parses, and standardizes track meet results of various formats into clean, analyzable CSV reports for athletic performance analysis."
+summary: "An intelligent web application that automatically detects, parses, and standardizes track meet results of various formats into clean, analyzable CSV reports for athletic performance analysis."
 startDate: 2025-01-02
 endDate: 2025-05-25
 status: "in-progress"
