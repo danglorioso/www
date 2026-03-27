@@ -7,9 +7,9 @@ technologies: ["Raspberry Pi", "Software Defined Radio (SDR)", "ADS-B / Mode S",
 categories: ["Aviation"]
 featured: false
 draft: false
-liveUrl: "https://flights.danglorioso.com"
+liveUrl: "https://planes.danglorioso.com"
 githubUrl: "https://github.com/danglorioso/adsb-map"
-favicon: "flights.ico"
+favicon: "planes.ico"
 priority: 6
 ---
 
