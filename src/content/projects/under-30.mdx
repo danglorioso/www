@@ -1,0 +1,65 @@
+---
+title: "Under 30 VSCode Extension"
+summary: "A Visual Studio Code extension that promotes good coding standards by displaying real-time line selection counts and detecting functions that exceed customizable length thresholds. Used by 800+ users."
+description: "Under 30 is a Visual Studio Code extension that helps developers maintain clean, readable code by displaying real-time line selection counts in the status bar and automatically detecting functions that exceed customizable length limits. The extension identifies formatting errors like unmatched braces and provides instant feedback to ensure your code adheres to professional coding standards."
+startDate: 2024-05-13
+endDate: 2025-01-13
+status: "completed"
+technologies: ["TypeScript", "VSCode Extension API", "Node.js", "JSON Schema", "Git", "npm"]
+categories: ["Developer Tools"]
+featured: true
+draft: false
+githubUrl: "https://github.com/danglorioso/under-30"
+liveUrl: "https://marketplace.visualstudio.com/items?itemName=danglorioso.under-30"
+favicon: "under-30.png"
+priority: 9
+achievements: ["800+ downloads on VS Code Marketplace"]
+---
+
+import FeatureShowcase from '../../components/projects/FeatureShowcase.tsx';
+import FunctionLengthSimulator from '../../components/projects/FunctionLengthSimulator.tsx';
+
+## The Story
+
+In the Tufts University CS Department, there's a hard rule: **functions must be no longer than 30 lines.** The idea is simple — a function that fits on a single screen is easier to read, easier to test, and easier to debug. Break it into smaller pieces if it grows.
+
+The problem is enforcing it. Every assignment submission, I'd manually count lines to make sure my functions were compliant before submitting. It was tedious and error-prone. Other students would lose points on style because a function crept to 32 or 35 lines without them noticing.
+
+So in May 2024, I built a VS Code extension to automate it. What started as a personal script to stop losing track of line counts turned into a published extension on the VS Code Marketplace — and eventually crossed **800 downloads**.
+
+## What It Does
+
+Under 30 adds two things to your VS Code environment:
+
+1. **A live line counter in the status bar** — select any range of lines and the count shows up immediately, no matter the language or file type.
+2. **A function length scanner** — on demand, it scans every function in the file and flags any that exceed the configured limit, reporting the exact start and end line numbers of each violation.
+
+It also checks for unbalanced braces before scanning, since mismatched `{` and `}` would produce garbage results and usually indicate a structural bug anyway.
+
+<FeatureShowcase client:load />
+
+## Try the Simulator
+
+The interactive demo below shows two real functions — one short, one long — and simulates how the extension responds. Drag the slider to change the limit and watch the status bar and notifications update in real time.
+
+<FunctionLengthSimulator client:load />
+
+## How the Detection Works
+
+The function scanner is brace-based rather than AST-based. It tracks the depth of `{` and `}` characters as it walks the file line by line, counting lines between the opening and closing brace of each top-level function.
+
+This approach has a few key advantages:
+- **Language-agnostic** — the same logic works for JavaScript, TypeScript, Java, C++, and any other curly-brace language without needing a separate parser per language.
+- **Handles nesting correctly** — inner blocks (`if`, `for`, `while`) don't confuse the scanner because it tracks brace depth, not just the first `}` it finds.
+- **Validates structure first** — unbalanced braces are caught before counting begins, so warnings are always accurate.
+
+The tradeoff: it won't work for languages that use indentation instead of braces (Python, Ruby). But for the CS department's assignments — all C and C++ — it was exactly the right tool.
+
+## Release History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.1.1 | Jan 13, 2025 | Updated documentation for clarity |
+| 1.1.0 | Jul 29, 2024 | Added `under30.setFunctionLengthLimit` command for dynamic limit changes |
+| 1.0.3 | Jun 5, 2024 | Documentation updates and corrections |
+| 1.0.0 | Jun 5, 2024 | Initial release |

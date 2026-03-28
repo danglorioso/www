@@ -11,9 +11,9 @@ liveUrl: "https://status.danglorioso.com"
 githubUrl: "https://github.com/danglorioso/status"
 favicon: "status.ico"
 priority: 7
-achievements: ["99.9% uptime tracking", "Real-time monitoring", "Automated incident detection", "Public transparency"]
+# achievements: ["99.9% uptime tracking", "Real-time monitoring", "Automated incident detection", "Public transparency"]
 ---
-
+<!-- 
 ## Project Overview
 
 The Status Page Monitoring System provides comprehensive visibility into the health and performance of all projects and services, offering real-time monitoring, historical analysis, and transparent communication during incidents. This critical infrastructure component ensures service reliability and user confidence.
@@ -95,4 +95,4 @@ All monitoring data collection and storage complies with privacy regulations whi
 
 ## Future Enhancements
 
-Planned improvements include predictive analytics for proactive issue detection, enhanced mobile applications, and expanded integration with cloud infrastructure monitoring services.
+Planned improvements include predictive analytics for proactive issue detection, enhanced mobile applications, and expanded integration with cloud infrastructure monitoring services. -->
