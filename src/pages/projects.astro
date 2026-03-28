@@ -236,24 +236,49 @@ const categories = Array.from(categorySet).sort();
       const body = document.body;
       let activeModal: HTMLElement | null = null;
       let scrollY = 0;
+      let headerWasHiddenWhenOpened = false;
 
       const setOpen = (modal: HTMLElement, open: boolean) => {
         modal.dataset.open = open ? "true" : "false";
         modal.setAttribute("aria-hidden", open ? "false" : "true");
         const projectsContent = document.getElementById("projects-content");
+        const header = document.getElementById("main-header");
         if (open) {
           scrollY = window.scrollY;
-          html.classList.add("modal-open");
-          body.classList.add("modal-open");
           body.style.top = `-${scrollY}px`;
           if (projectsContent) {
             projectsContent.classList.add("blur-sm", "pointer-events-none");
           }
+          const doOpen = () => {
+            html.classList.add("modal-open");
+            html.classList.remove("modal-opening");
+            body.classList.add("modal-open");
+            body.classList.remove("modal-opening");
+          };
+          if (header) {
+            const m = getComputedStyle(header).transform.match(/matrix\(([^)]+)\)/);
+            const ty = m ? parseFloat(m[1].split(",").map((s) => s.trim())[5] || "0") : 0;
+            headerWasHiddenWhenOpened = ty < 0;
+            if (headerWasHiddenWhenOpened) {
+              html.classList.add("modal-opening");
+              body.classList.add("modal-opening");
+              void header.offsetHeight;
+              requestAnimationFrame(doOpen);
+            } else {
+              doOpen();
+            }
+          } else {
+            headerWasHiddenWhenOpened = false;
+            doOpen();
+          }
         } else if (!activeModal) {
           html.classList.remove("modal-open");
+          html.classList.remove("modal-opening");
           body.classList.remove("modal-open");
+          body.classList.remove("modal-opening");
           body.style.top = "";
           window.scrollTo(0, scrollY);
+          window.dispatchEvent(new Event("scroll"));
           if (projectsContent) {
             projectsContent.classList.remove("blur-sm", "pointer-events-none");
           }
@@ -275,9 +300,13 @@ const categories = Array.from(categorySet).sort();
           modalToClose.setAttribute("aria-hidden", "true");
           activeModal = null;
           html.classList.remove("modal-open");
+          html.classList.remove("modal-opening");
           body.classList.remove("modal-open");
+          body.classList.remove("modal-closing");
+          body.classList.remove("modal-opening");
           body.style.top = "";
           window.scrollTo(0, scrollY);
+          window.dispatchEvent(new Event("scroll"));
         };
 
         const onTransitionEnd = (e: TransitionEvent) => {
@@ -290,6 +319,11 @@ const categories = Array.from(categorySet).sort();
         const projectsContent = document.getElementById("projects-content");
         if (projectsContent) {
           projectsContent.classList.remove("blur-sm", "pointer-events-none");
+        }
+
+        // Only animate header slide-up if it was hidden when we opened (otherwise keep it visible)
+        if (headerWasHiddenWhenOpened) {
+          body.classList.add("modal-closing");
         }
 
         modalToClose.dataset.closing = "true";

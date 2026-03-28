@@ -54,23 +54,24 @@ const currentStatus = statusConfig[project.data.status as keyof typeof statusCon
   id={`project-modal-${project.slug}`}
   data-project-modal={project.slug}
   data-open={isOpen ? "true" : "false"}
-  class="project-modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none invisible transition-opacity duration-300"
+  class="project-modal fixed top-[5.5rem] left-0 right-0 bottom-0 z-50 flex items-stretch justify-center p-4 md:p-6 opacity-0 pointer-events-none invisible transition-opacity duration-300"
   role="dialog"
   aria-modal="true"
   aria-labelledby={`modal-title-${project.slug}`}
   aria-hidden={isOpen ? "false" : "true"}
 >
-  <!-- Backdrop: dim overlay + blur so content behind is never readable -->
+  <!-- Backdrop: covers viewport from top (header stays above, visible) -->
+  <!-- Backdrop extends into padding area so clicks anywhere outside panel close modal -->
   <div
     data-modal-backdrop
-    class="absolute inset-0 bg-transparent transition-all duration-0 ease-out"
+    class="absolute -inset-4 md:-inset-6 bg-transparent transition-all duration-0 ease-out"
     aria-hidden="true"
   ></div>
 
-  <!-- Modal Container -->
+  <!-- Modal container: stretches to fill space below header with padding -->
   <div
     data-modal-panel
-    class="relative w-full max-w-5xl max-h-[80vh] sm:max-h-[75vh] bg-bg-primary border border-border-primary rounded-lg shadow-2xl overflow-hidden flex flex-col opacity-0 scale-95 translate-y-4 transition-all duration-500 ease-out mt-8 md:mt-0"
+    class="project-modal__panel relative w-full max-w-5xl mx-auto flex-1 min-h-0 flex flex-col bg-bg-primary border border-border-primary rounded-lg shadow-2xl overflow-hidden opacity-0 scale-95 translate-y-4 transition-all duration-500"
   >
     <!-- Header with Close Button -->
     <div class="flex items-center justify-between p-4 md:p-6 border-b border-border-secondary flex-shrink-0">
@@ -307,7 +308,7 @@ const currentStatus = statusConfig[project.data.status as keyof typeof statusCon
   }
 
   .project-modal[data-open="true"] [data-modal-backdrop] {
-    /* @apply bg-black/40; */
+    @apply bg-black/40;
   }
 
   .project-modal[data-open="true"] [data-modal-panel] {
@@ -351,13 +352,43 @@ const currentStatus = statusConfig[project.data.status as keyof typeof statusCon
   }
 
   /* Prevent page scroll when modal is open */
-  html.modal-open {
+  html.modal-open,
+  html.modal-opening {
     @apply overflow-hidden;
   }
 
-  body.modal-open {
+  body.modal-open,
+  body.modal-opening {
     @apply overflow-hidden fixed left-0 right-0;
   }
+
+  /* Phase 2: modal open - header visible */
+  :global(body.modal-open #main-header) {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: translateY(0) !important;
+    z-index: 60;
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  }
+
+  /* Phase 1: when opening, pin header at -100% first (must come after modal-open to override) */
+  :global(body.modal-opening #main-header) {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: translateY(-100%) !important;
+    transition: none !important;
+    z-index: 60;
+  }
+
+  /* Header: slide up when modal is closing */
+  :global(body.modal-open.modal-closing #main-header) {
+    transform: translateY(-100%) !important;
+  }
+
 
   /* Enhanced link hover effects */
   .prose a {
