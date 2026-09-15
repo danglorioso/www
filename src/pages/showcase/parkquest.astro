@@ -1985,10 +1985,36 @@ const adminTools = [
     border-radius: 1.25rem;
     background: linear-gradient(165deg, #182a1e, #0e1811);
     box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.045), 0 14px 34px rgba(0, 0, 0, 0.35);
-    transition: outline-color 0.2s ease;
+    transition: outline-color 0.2s ease, opacity 0.65s ease, transform 0.65s ease;
   }
   .pq-inside-card:hover {
     outline-color: color-mix(in oklab, var(--pq-gold) 45%, rgba(240, 234, 219, 0.1));
+  }
+  /* Scroll reveal: each card starts faded/dropped a bit and settles into
+     place as it enters the viewport (see initParkQuestBentoReveal), rather
+     than the whole grid just being there on load — the transition target
+     is a class toggle, not a JS-driven opacity/transform loop, so it's a
+     single browser-composited animation per card. `--reveal-delay` staggers
+     cards that cross the viewport edge together (e.g. the two-across rows
+     at 700px+) instead of all seven snapping in at once. Same assumption
+     the pinned phone mockup's screens already make on this page (their
+     opacity:0/visibility:hidden default also depends on JS to reveal
+     them) — not worth a separate no-JS fallback for one showcase page. */
+  .pq-inside-card {
+    opacity: 0;
+    transform: translateY(28px);
+    transition-delay: var(--reveal-delay, 0s);
+  }
+  .pq-inside-card.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pq-inside-card {
+      opacity: 1;
+      transform: none;
+      transition-delay: 0s;
+    }
   }
   .pq-inside-card h3 {
     margin: 0;
@@ -4490,6 +4516,52 @@ const adminTools = [
     videos.forEach((video) => observer.observe(video));
   }
 
+  function initParkQuestBentoReveal() {
+    const cards = Array.from(document.querySelectorAll<HTMLElement>(".pq-inside-card"));
+    if (!cards.length) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      cards.forEach((card) => card.classList.add("is-revealed"));
+      return;
+    }
+    // Cards that cross the trigger line in the same scroll tick (the
+    // two-across rows at 700px+, three-across at 1100px+) stagger off one
+    // shared clock instead of each restarting its own delay from zero —
+    // reset whenever a whole tick passes with nothing newly revealed, so a
+    // slow scroll back down to a card scrolled past earlier doesn't inherit
+    // a stale, much-longer delay from the first batch.
+    let batchIndex = 0;
+    let batchResetTimer: ReturnType<typeof setTimeout>;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const revealed = entries.filter((e) => e.isIntersecting);
+        if (!revealed.length) return;
+        clearTimeout(batchResetTimer);
+        revealed.forEach((entry) => {
+          const card = entry.target as HTMLElement;
+          card.style.setProperty("--reveal-delay", `${Math.min(batchIndex, 4) * 90}ms`);
+          observer.unobserve(card);
+          batchIndex++;
+          // A card can already satisfy the intersection threshold the
+          // instant the observer attaches — on a page load that restores
+          // a scrolled-down position, this whole section can already be
+          // in view before the very first callback fires. Adding
+          // is-revealed synchronously then risks the browser coalescing
+          // the hidden starting state and the revealed one into the same
+          // paint, skipping the transition rather than animating it. Two
+          // rAFs guarantee the hidden state has actually been painted
+          // first, so the reveal always plays, load after load, no matter
+          // where the page starts scrolled.
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => card.classList.add("is-revealed"));
+          });
+        });
+        batchResetTimer = setTimeout(() => (batchIndex = 0), 200);
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+    );
+    cards.forEach((card) => observer.observe(card));
+  }
+
   function initParkQuestScrollRefresh() {
     // The pinned crossfade's trigger boundaries are computed against
     // whatever the page's layout height is at init time. Real screenshots
@@ -4787,6 +4859,7 @@ const adminTools = [
     initParkQuestScroll();
     initParkQuestScrollCue();
     initParkQuestMedia();
+    initParkQuestBentoReveal();
     initParkQuestScrollRefresh();
     initParkQuestSuggestionGraph();
     initParkQuestCarousel();
