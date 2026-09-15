@@ -1897,11 +1897,11 @@ const adminTools = [
   .pq-ca-label {
     font-size: 10.5px;
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.07em;
     fill: var(--pq-cream);
     paint-order: stroke;
     stroke: var(--pq-bg-0);
-    stroke-width: 3px;
+    stroke-width: 2.6px;
     stroke-linejoin: round;
     stroke-opacity: 0.85;
   }
@@ -4457,7 +4457,7 @@ const adminTools = [
     const target = document.getElementById("pq-origin-section");
     if (!btn || !target) return;
     btn.addEventListener("click", () => {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
     });
   }
 
