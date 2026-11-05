@@ -14,7 +14,8 @@
  * content. It runs one way only: a soft navy glow at the top-right of the
  * page fading into one even navy base for the rest of the page. Grain and
  * chaos noise are hashed in page space too, so the texture scrolls with the
- * content like a printed surface.
+ * content like a printed surface. A faint 72px grid is drawn in the same page
+ * space, faded toward the screen edges (set GRID = 0 to turn it off).
  */
 ---
 
@@ -25,6 +26,8 @@
 <script>
   const CHAOS = 0.1;
   const GRAIN = 0.1;
+  const GRID = 0.063; // grid line strength (0 = off); matches old slate-400/7% at 90% opacity
+  const GRID_PX = 72; // grid spacing in CSS px
 
   const VERT = `
     attribute vec2 aPos;
@@ -43,7 +46,10 @@
     uniform float uChaos;
     uniform float uGrain;
     uniform float uScroll;      // scroll offset in viewport heights (gradient)
-    uniform float uScrollCells; // scroll offset in grain cells, mod 4096 (texture)
+    uniform float uScrollCells; // scroll offset in grain cells, mod uWrap (texture + grid)
+    uniform float uWrap;        // page-space wrap period in cells (multiple of uGridCells)
+    uniform float uGridCells;   // grid spacing in cells
+    uniform float uGrid;        // grid line strength
 
     // Dave Hoskins' sine-free hash
     float hash12(vec2 p) {
@@ -76,10 +82,19 @@
       // noise cells in page space (rows counted top-down + scroll) so the
       // texture scrolls with the content; wrapped to keep hash inputs small
       float row = floor((uRes.y - gl_FragCoord.y) / uCell);
-      vec2 cell = vec2(floor(gl_FragCoord.x / uCell), mod(row + uScrollCells, 4096.0));
+      vec2 cell = vec2(floor(gl_FragCoord.x / uCell), mod(row + uScrollCells, uWrap));
       vec2 jitter = vec2(hash12(cell), hash12(cell + 17.31)) - 0.5;
       vec3 col = field(p + jitter * (uChaos / 2.0));
 
+      // faint 1px grid, page-anchored; faded toward the screen edges by a
+      // screen-fixed ellipse (same mask as the old CSS grid)
+      vec2 g = mod(cell, uGridCells);
+      float line = max(1.0 - step(1.0, g.x), 1.0 - step(1.0, g.y));
+      vec2 m = vec2((uv.x - 0.5) / 0.75, ((1.0 - uv.y) - 0.35) / 0.70);
+      float mask = 1.0 - smoothstep(0.30, 0.72, length(m));
+      col = mix(col, vec3(0.580, 0.639, 0.722), uGrid * line * mask); // slate-400
+
+      // grain last, so it sits over the grid lines too
       col += (hash12(cell + 91.7) - 0.5) * (uGrain / 2.5);
       gl_FragColor = vec4(col, 1.0);
     }
@@ -123,8 +138,12 @@
     const uCell = gl.getUniformLocation(prog, "uCell");
     const uScroll = gl.getUniformLocation(prog, "uScroll");
     const uScrollCells = gl.getUniformLocation(prog, "uScrollCells");
+    const uWrap = gl.getUniformLocation(prog, "uWrap");
+    const uGridCells = gl.getUniformLocation(prog, "uGridCells");
     gl.uniform1f(gl.getUniformLocation(prog, "uChaos"), CHAOS);
     gl.uniform1f(gl.getUniformLocation(prog, "uGrain"), GRAIN);
+    gl.uniform1f(gl.getUniformLocation(prog, "uGrid"), GRID);
+    let wrap = 4096;
 
     function draw() {
       const dpr = window.devicePixelRatio || 1;
@@ -140,12 +159,19 @@
         gl!.viewport(0, 0, w, h);
         gl!.uniform2f(uRes, w, h);
         gl!.uniform1f(uCell, cellPx);
+
+        // wrap page-space cells at a multiple of the grid spacing (~4096) so
+        // hash inputs stay small without the grid jumping at the wrap point
+        const gridCells = Math.max(2, Math.round((GRID_PX * dpr) / cellPx));
+        wrap = gridCells * Math.floor(4096 / gridCells);
+        gl!.uniform1f(uGridCells, gridCells);
+        gl!.uniform1f(uWrap, wrap);
       }
 
       // whole cells only, so fractional (trackpad) scroll doesn't shimmer the grain;
       // positive modulo also handles negative overscroll bounce
       const cells = Math.round((window.scrollY * dpr) / cellPx);
-      gl!.uniform1f(uScrollCells, ((cells % 4096) + 4096) % 4096);
+      gl!.uniform1f(uScrollCells, ((cells % wrap) + wrap) % wrap);
       gl!.uniform1f(uScroll, window.scrollY / cssH);
       gl!.drawArrays(gl!.TRIANGLES, 0, 3);
       canvas!.dataset.ready = "true";
