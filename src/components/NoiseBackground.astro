@@ -8,12 +8,13 @@
  * a viewport-sized fixed canvas; the CSS gradient on the wrapper is the
  * fallback shown before paint or when WebGL is unavailable.
  *
- * Composition lives in a virtual space 1.6 wide where y is measured in
- * viewport heights down the page, so phones get the same layout stretched.
- * The blob pattern repeats every PERIOD viewport heights and the canvas is
+ * Composition lives in page space: x spans a virtual width of 1.6, y is
+ * measured in viewport heights from the top of the document. The canvas is
  * redrawn on scroll with the page offset, so the gradient scrolls with the
- * content and keeps going on long pages. Grain stays screen-anchored (film
- * grain) so it doesn't shimmer while scrolling.
+ * content. It runs one way only: a soft navy glow at the top-right of the
+ * page fading into one even navy base for the rest of the page. Grain and
+ * chaos noise are hashed in page space too, so the texture scrolls with the
+ * content like a printed surface.
  */
 ---
 
@@ -24,7 +25,6 @@
 <script>
   const CHAOS = 0.1;
   const GRAIN = 0.1;
-  const PERIOD = 1.6; // viewport heights per repeat of the blob pattern
 
   const VERT = `
     attribute vec2 aPos;
@@ -38,14 +38,12 @@
     precision mediump float;
     #endif
 
-    uniform vec2 uRes;    // canvas size in device px
-    uniform float uCell;  // grain cell size in device px (1 CSS px)
+    uniform vec2 uRes;     // canvas size in device px
+    uniform float uCell;   // grain cell size in device px (1 CSS px)
     uniform float uChaos;
     uniform float uGrain;
-    uniform float uScroll; // page offset in viewport heights, already mod PERIOD
-
-    const float PERIOD = ${PERIOD.toFixed(4)};
-    const float TAU = 6.28318530718;
+    uniform float uScroll;      // scroll offset in viewport heights (gradient)
+    uniform float uScrollCells; // scroll offset in grain cells, mod 4096 (texture)
 
     // Dave Hoskins' sine-free hash
     float hash12(vec2 p) {
@@ -61,19 +59,13 @@
 
     vec3 field(vec2 p) {
       // gentle domain warp so blob edges are organic, not elliptical
-      // (y-driven term uses TAU / PERIOD so the warp repeats with the pattern)
-      p += 0.1 * sin(vec2(TAU / PERIOD * p.y + 1.2, 2.6 * p.x + 2.04));
+      p += 0.1 * sin(vec2(2.6 * p.y + 1.2, 2.6 * p.x + 2.04));
 
-      vec3 col = vec3(0.039, 0.071, 0.133); // #0a1222
-      // blobs reach ~0.75 beyond their centre, so neighbouring repeats overlap
-      float k0 = floor(p.y / PERIOD);
-      for (int i = -1; i <= 1; i++) {
-        float oy = (k0 + float(i)) * PERIOD;
-        col = blob(col, p, vec3(0.118, 0.196, 0.400), vec2(1.30, 0.10 + oy), vec2(0.95, 0.75), 0.70); // #1e3266
-        col = blob(col, p, vec3(0.090, 0.145, 0.329), vec2(0.70, 0.45 + oy), vec2(0.80, 0.55), 0.35); // #172554
-        col = blob(col, p, vec3(0.118, 0.196, 0.400), vec2(0.10, 1.00 + oy), vec2(0.85, 0.65), 0.45); // #1e3266, softer
-        col = blob(col, p, vec3(0.008, 0.024, 0.090), vec2(1.50, 1.05 + oy), vec2(0.70, 0.55), 0.70); // #020617
-      }
+      vec3 col = vec3(0.043, 0.078, 0.149); // #0b1426 everywhere below the glow
+
+      // light only at the top of the page, fading into the base
+      col = blob(col, p, vec3(0.090, 0.145, 0.329), vec2(0.95, 0.30), vec2(0.90, 0.60), 0.30); // #172554
+      col = blob(col, p, vec3(0.118, 0.196, 0.400), vec2(1.30, 0.10), vec2(0.95, 0.75), 0.45); // #1e3266
       return col;
     }
 
@@ -81,7 +73,10 @@
       vec2 uv = gl_FragCoord.xy / uRes;
       vec2 p = vec2(uv.x * 1.6, 1.0 - uv.y + uScroll);
 
-      vec2 cell = floor(gl_FragCoord.xy / uCell);
+      // noise cells in page space (rows counted top-down + scroll) so the
+      // texture scrolls with the content; wrapped to keep hash inputs small
+      float row = floor((uRes.y - gl_FragCoord.y) / uCell);
+      vec2 cell = vec2(floor(gl_FragCoord.x / uCell), mod(row + uScrollCells, 4096.0));
       vec2 jitter = vec2(hash12(cell), hash12(cell + 17.31)) - 0.5;
       vec3 col = field(p + jitter * (uChaos / 2.0));
 
@@ -127,6 +122,7 @@
     const uRes = gl.getUniformLocation(prog, "uRes");
     const uCell = gl.getUniformLocation(prog, "uCell");
     const uScroll = gl.getUniformLocation(prog, "uScroll");
+    const uScrollCells = gl.getUniformLocation(prog, "uScrollCells");
     gl.uniform1f(gl.getUniformLocation(prog, "uChaos"), CHAOS);
     gl.uniform1f(gl.getUniformLocation(prog, "uGrain"), GRAIN);
 
@@ -136,19 +132,21 @@
       const w = Math.round(canvas!.clientWidth * dpr);
       const h = Math.round(cssH * dpr);
       if (!w || !h) return;
+      const cellPx = Math.max(1, Math.round(dpr));
 
       if (canvas!.width !== w || canvas!.height !== h) {
         canvas!.width = w;
         canvas!.height = h;
         gl!.viewport(0, 0, w, h);
         gl!.uniform2f(uRes, w, h);
-        gl!.uniform1f(uCell, Math.max(1, Math.round(dpr)));
+        gl!.uniform1f(uCell, cellPx);
       }
 
-      // pattern is periodic, so wrap to keep shader coordinates small
-      // (positive modulo also handles negative overscroll bounce)
-      const pages = window.scrollY / cssH;
-      gl!.uniform1f(uScroll, ((pages % PERIOD) + PERIOD) % PERIOD);
+      // whole cells only, so fractional (trackpad) scroll doesn't shimmer the grain;
+      // positive modulo also handles negative overscroll bounce
+      const cells = Math.round((window.scrollY * dpr) / cellPx);
+      gl!.uniform1f(uScrollCells, ((cells % 4096) + 4096) % 4096);
+      gl!.uniform1f(uScroll, window.scrollY / cssH);
       gl!.drawArrays(gl!.TRIANGLES, 0, 3);
       canvas!.dataset.ready = "true";
     }
@@ -183,13 +181,11 @@
     height: 100vh;
     height: 100lvh;
     pointer-events: none;
-    /* fallback ≈ same blobs (CSS lists top layer first; alpha follows smoothstep) */
+    /* fallback ≈ first screen of the shader (CSS lists top layer first) */
     background:
-      radial-gradient(43.75% 55% at 93.75% 105%, rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.35) 50%, transparent),
-      radial-gradient(53.1% 65% at 6.25% 100%, rgba(30, 50, 102, 0.45), rgba(30, 50, 102, 0.22) 50%, transparent),
-      radial-gradient(50% 55% at 43.75% 45%, rgba(23, 37, 84, 0.35), rgba(23, 37, 84, 0.18) 50%, transparent),
-      radial-gradient(59.4% 75% at 81.25% 10%, rgba(30, 50, 102, 0.7), rgba(30, 50, 102, 0.35) 50%, transparent),
-      #0a1222;
+      radial-gradient(59.4% 75% at 81.25% 10%, rgba(30, 50, 102, 0.45), rgba(30, 50, 102, 0.22) 50%, transparent),
+      radial-gradient(56% 60% at 59% 30%, rgba(23, 37, 84, 0.3), rgba(23, 37, 84, 0.15) 50%, transparent),
+      #0b1426;
   }
 
   .noise-bg__canvas {
