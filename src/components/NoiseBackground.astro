@@ -4,184 +4,197 @@
  *
  * Same technique as noiseandgradient.com: soft colour blobs composited over a
  * base, sampled at a per-pixel random jitter ("chaos" -> dithered blob edges),
- * plus monochrome luminance grain. Drawn with WebGL at device resolution into
- * a viewport-sized fixed canvas; the CSS gradient on the wrapper is the
- * fallback shown before paint or when WebGL is unavailable.
+ * plus monochrome luminance grain. Drawn with WebGL at device resolution.
  *
  * Composition lives in page space: x spans a virtual width of 1.6, y is
- * measured in viewport heights from the top of the document. The canvas is
- * redrawn on scroll with the page offset, so the gradient scrolls with the
- * content. It runs one way only: a soft navy glow at the top-right of the
- * page fading into one even navy base for the rest of the page. Grain and
- * chaos noise are hashed in page space too, so the texture scrolls with the
- * content like a printed surface. A faint 72px grid is drawn in the same page
- * space, faded toward the screen edges (set GRID = 0 to turn it off).
+ * measured in viewport heights from the top of the document. A soft navy glow
+ * sits at the top-right of the page and fades into one even navy base. Grain,
+ * chaos noise and a faint 72px grid (top ~3/4 of the first screen only) are
+ * hashed in the same page space, so everything scrolls with the content.
+ *
+ * Layout: a page-tall layer (.noise-bg, absolute in the relative <body>) holds
+ * a viewport-tall sticky view with the canvas. Sticky rather than fixed so the
+ * background is part of the scrolled content and moves with it during
+ * rubber-band overscroll. The canvas is redrawn on scroll/resize from its real
+ * page position. The inline script draws synchronously during parsing, so the
+ * background (grid included) is there at first paint; the CSS gradient on the
+ * view is the fallback when WebGL is unavailable.
+ *
+ * Requires: <body> position: relative, and no overflow: hidden on html/body
+ * (use overflow: clip) since that would make body the sticky scroll container.
  */
 ---
 
 <div class="noise-bg" aria-hidden="true">
-  <canvas class="noise-bg__canvas"></canvas>
+  <div class="noise-bg__view">
+    <canvas class="noise-bg__canvas"></canvas>
+  </div>
 </div>
 
-<script>
-  const CHAOS = 0.1;
-  const GRAIN = 0.1;
-  const GRID = 0.063; // grid line strength (0 = off); matches old slate-400/7% at 90% opacity
-  const GRID_PX = 72; // grid spacing in CSS px
+<script is:inline>
+  (function () {
+    var CHAOS = 0.1;
+    var GRAIN = 0.1;
+    var GRID = 0.063; // grid line strength (0 = off); matches old slate-400/7% at 90% opacity
+    var GRID_PX = 72; // grid spacing in CSS px
 
-  const VERT = `
-    attribute vec2 aPos;
-    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
-  `;
+    var VERT =
+      "attribute vec2 aPos;" +
+      "void main() { gl_Position = vec4(aPos, 0.0, 1.0); }";
 
-  const FRAG = `
-    #ifdef GL_FRAGMENT_PRECISION_HIGH
-    precision highp float;
-    #else
-    precision mediump float;
-    #endif
+    var FRAG = `
+      #ifdef GL_FRAGMENT_PRECISION_HIGH
+      precision highp float;
+      #else
+      precision mediump float;
+      #endif
 
-    uniform vec2 uRes;     // canvas size in device px
-    uniform float uCell;   // grain cell size in device px (1 CSS px)
-    uniform float uChaos;
-    uniform float uGrain;
-    uniform float uScroll;      // scroll offset in viewport heights (gradient)
-    uniform float uScrollCells; // scroll offset in grain cells, mod uWrap (texture + grid)
-    uniform float uWrap;        // page-space wrap period in cells (multiple of uGridCells)
-    uniform float uGridCells;   // grid spacing in cells
-    uniform float uGrid;        // grid line strength
+      uniform vec2 uRes;          // canvas size in device px
+      uniform float uCell;        // grain cell size in device px (1 CSS px)
+      uniform float uChaos;
+      uniform float uGrain;
+      uniform float uGrid;        // grid line strength
+      uniform float uGridCells;   // grid spacing in cells
+      uniform float uWrap;        // page-space wrap period in cells (multiple of uGridCells)
+      uniform float uTop;         // page y of canvas top, in viewport heights (gradient)
+      uniform float uTopCells;    // page y of canvas top, in cells mod uWrap (texture + grid)
 
-    // Dave Hoskins' sine-free hash
-    float hash12(vec2 p) {
-      vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-      p3 += dot(p3, p3.yzx + 33.33);
-      return fract((p3.x + p3.y) * p3.z);
-    }
+      // Dave Hoskins' sine-free hash
+      float hash12(vec2 p) {
+        vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+        p3 += dot(p3, p3.yzx + 33.33);
+        return fract((p3.x + p3.y) * p3.z);
+      }
 
-    vec3 blob(vec3 col, vec2 p, vec3 c, vec2 at, vec2 r, float a) {
-      float d = clamp(length((p - at) / r), 0.0, 1.0);
-      return mix(col, c, a * (1.0 - smoothstep(0.0, 1.0, d)));
-    }
+      vec3 blob(vec3 col, vec2 p, vec3 c, vec2 at, vec2 r, float a) {
+        float d = clamp(length((p - at) / r), 0.0, 1.0);
+        return mix(col, c, a * (1.0 - smoothstep(0.0, 1.0, d)));
+      }
 
-    vec3 field(vec2 p) {
-      // gentle domain warp so blob edges are organic, not elliptical
-      p += 0.1 * sin(vec2(2.6 * p.y + 1.2, 2.6 * p.x + 2.04));
+      vec3 field(vec2 p) {
+        // gentle domain warp so blob edges are organic, not elliptical
+        p += 0.1 * sin(vec2(2.6 * p.y + 1.2, 2.6 * p.x + 2.04));
 
-      vec3 col = vec3(0.043, 0.078, 0.149); // #0b1426 everywhere below the glow
+        vec3 col = vec3(0.043, 0.078, 0.149); // #0b1426 everywhere below the glow
 
-      // light only at the top of the page, fading into the base
-      col = blob(col, p, vec3(0.090, 0.145, 0.329), vec2(0.95, 0.30), vec2(0.90, 0.60), 0.30); // #172554
-      col = blob(col, p, vec3(0.118, 0.196, 0.400), vec2(1.30, 0.10), vec2(0.95, 0.75), 0.45); // #1e3266
-      return col;
-    }
+        // light only at the top of the page, fading into the base
+        col = blob(col, p, vec3(0.090, 0.145, 0.329), vec2(0.95, 0.40), vec2(0.90, 0.75), 0.30); // #172554
+        col = blob(col, p, vec3(0.118, 0.196, 0.400), vec2(1.30, 0.15), vec2(0.95, 0.95), 0.45); // #1e3266
+        return col;
+      }
 
-    void main() {
-      vec2 uv = gl_FragCoord.xy / uRes;
-      vec2 p = vec2(uv.x * 1.6, 1.0 - uv.y + uScroll);
+      void main() {
+        vec2 uv = gl_FragCoord.xy / uRes;
+        vec2 p = vec2(uv.x * 1.6, 1.0 - uv.y + uTop);
 
-      // noise cells in page space (rows counted top-down + scroll) so the
-      // texture scrolls with the content; wrapped to keep hash inputs small
-      float row = floor((uRes.y - gl_FragCoord.y) / uCell);
-      vec2 cell = vec2(floor(gl_FragCoord.x / uCell), mod(row + uScrollCells, uWrap));
-      vec2 jitter = vec2(hash12(cell), hash12(cell + 17.31)) - 0.5;
-      vec3 col = field(p + jitter * (uChaos / 2.0));
+        // noise cells in page space (rows counted top-down from the page top)
+        // so the texture scrolls with the content; wrapped to keep hash inputs small
+        float row = floor((uRes.y - gl_FragCoord.y) / uCell);
+        vec2 cell = vec2(floor(gl_FragCoord.x / uCell), mod(row + uTopCells, uWrap));
+        vec2 jitter = vec2(hash12(cell), hash12(cell + 17.31)) - 0.5;
+        vec3 col = field(p + jitter * (uChaos / 2.0));
 
-      // faint 1px grid, page-anchored; faded toward the screen edges by a
-      // screen-fixed ellipse (same mask as the old CSS grid)
-      vec2 g = mod(cell, uGridCells);
-      float line = max(1.0 - step(1.0, g.x), 1.0 - step(1.0, g.y));
-      vec2 m = vec2((uv.x - 0.5) / 0.75, ((1.0 - uv.y) - 0.35) / 0.70);
-      float mask = 1.0 - smoothstep(0.30, 0.72, length(m));
-      col = mix(col, vec3(0.580, 0.639, 0.722), uGrid * line * mask); // slate-400
+        // faint 1px grid, page-anchored; covers roughly the top 3/4 of the first
+        // screen: full to 0.6, fading to gone by 0.95 screen-heights, plus a soft
+        // fade toward the sides (mask is in page space, so it scrolls away)
+        vec2 g = mod(cell, uGridCells);
+        float line = max(1.0 - step(1.0, g.x), 1.0 - step(1.0, g.y));
+        float vmask = 1.0 - smoothstep(0.60, 0.95, p.y);
+        float hmask = 1.0 - smoothstep(0.25, 0.85, abs(uv.x - 0.5) / 0.75);
+        col = mix(col, vec3(0.580, 0.639, 0.722), uGrid * line * vmask * hmask); // slate-400
 
-      // grain last, so it sits over the grid lines too
-      col += (hash12(cell + 91.7) - 0.5) * (uGrain / 2.5);
-      gl_FragColor = vec4(col, 1.0);
-    }
-  `;
+        // grain last, so it sits over the grid lines too
+        col += (hash12(cell + 91.7) - 0.5) * (uGrain / 2.5);
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `;
 
-  function initNoiseBackground() {
-    const canvas = document.querySelector<HTMLCanvasElement>(".noise-bg__canvas");
+    var canvas = document.querySelector(".noise-bg__canvas");
     if (!canvas) return;
 
-    const gl = canvas.getContext("webgl", {
+    var gl = canvas.getContext("webgl", {
       alpha: false,
       antialias: false,
       depth: false,
       stencil: false,
       powerPreference: "low-power",
     });
-    if (!gl) return; // CSS gradient fallback stays visible
+    if (!gl) return; // CSS gradient fallback on the view stays visible
 
-    function compile(type: number, src: string) {
-      const s = gl!.createShader(type)!;
-      gl!.shaderSource(s, src);
-      gl!.compileShader(s);
+    function compile(type, src) {
+      var s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
       return s;
     }
 
-    const prog = gl.createProgram()!;
+    var prog = gl.createProgram();
     gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
     gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
     gl.useProgram(prog);
 
-    // one oversized triangle covering the viewport
+    // one oversized triangle covering the canvas
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const aPos = gl.getAttribLocation(prog, "aPos");
+    var aPos = gl.getAttribLocation(prog, "aPos");
     gl.enableVertexAttribArray(aPos);
     gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-    const uRes = gl.getUniformLocation(prog, "uRes");
-    const uCell = gl.getUniformLocation(prog, "uCell");
-    const uScroll = gl.getUniformLocation(prog, "uScroll");
-    const uScrollCells = gl.getUniformLocation(prog, "uScrollCells");
-    const uWrap = gl.getUniformLocation(prog, "uWrap");
-    const uGridCells = gl.getUniformLocation(prog, "uGridCells");
-    gl.uniform1f(gl.getUniformLocation(prog, "uChaos"), CHAOS);
-    gl.uniform1f(gl.getUniformLocation(prog, "uGrain"), GRAIN);
-    gl.uniform1f(gl.getUniformLocation(prog, "uGrid"), GRID);
-    let wrap = 4096;
+    function loc(name) {
+      return gl.getUniformLocation(prog, name);
+    }
+    var uRes = loc("uRes");
+    var uCell = loc("uCell");
+    var uGridCells = loc("uGridCells");
+    var uWrap = loc("uWrap");
+    var uTop = loc("uTop");
+    var uTopCells = loc("uTopCells");
+    gl.uniform1f(loc("uChaos"), CHAOS);
+    gl.uniform1f(loc("uGrain"), GRAIN);
+    gl.uniform1f(loc("uGrid"), GRID);
+    var wrap = 4096;
 
     function draw() {
-      const dpr = window.devicePixelRatio || 1;
-      const cssH = canvas!.clientHeight;
-      const w = Math.round(canvas!.clientWidth * dpr);
-      const h = Math.round(cssH * dpr);
+      var dpr = window.devicePixelRatio || 1;
+      var rect = canvas.getBoundingClientRect();
+      var w = Math.round(rect.width * dpr);
+      var h = Math.round(rect.height * dpr);
       if (!w || !h) return;
-      const cellPx = Math.max(1, Math.round(dpr));
+      var cellPx = Math.max(1, Math.round(dpr));
 
-      if (canvas!.width !== w || canvas!.height !== h) {
-        canvas!.width = w;
-        canvas!.height = h;
-        gl!.viewport(0, 0, w, h);
-        gl!.uniform2f(uRes, w, h);
-        gl!.uniform1f(uCell, cellPx);
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+        gl.viewport(0, 0, w, h);
+        gl.uniform2f(uRes, w, h);
+        gl.uniform1f(uCell, cellPx);
 
         // wrap page-space cells at a multiple of the grid spacing (~4096) so
         // hash inputs stay small without the grid jumping at the wrap point
-        const gridCells = Math.max(2, Math.round((GRID_PX * dpr) / cellPx));
+        var gridCells = Math.max(2, Math.round((GRID_PX * dpr) / cellPx));
         wrap = gridCells * Math.floor(4096 / gridCells);
-        gl!.uniform1f(uGridCells, gridCells);
-        gl!.uniform1f(uWrap, wrap);
+        gl.uniform1f(uGridCells, gridCells);
+        gl.uniform1f(uWrap, wrap);
       }
 
-      // whole cells only, so fractional (trackpad) scroll doesn't shimmer the grain;
-      // positive modulo also handles negative overscroll bounce
-      const cells = Math.round((window.scrollY * dpr) / cellPx);
-      gl!.uniform1f(uScrollCells, ((cells % wrap) + wrap) % wrap);
-      gl!.uniform1f(uScroll, window.scrollY / cssH);
-      gl!.drawArrays(gl!.TRIANGLES, 0, 3);
-      canvas!.dataset.ready = "true";
+      // page y of the canvas top: normally scrollY (sticky at the viewport
+      // top), but also right during Safari's negative-scroll bounce and when
+      // sticky is pushed up at the very bottom of the page on mobile.
+      // Whole cells only, so fractional (trackpad) scroll doesn't shimmer the grain.
+      var top = window.scrollY + rect.top;
+      var cells = Math.round((top * dpr) / cellPx);
+      gl.uniform1f(uTopCells, ((cells % wrap) + wrap) % wrap);
+      gl.uniform1f(uTop, top / rect.height);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
 
-    let pending = false;
+    var pending = false;
     function schedule() {
       if (pending) return;
       pending = true;
-      requestAnimationFrame(() => {
+      requestAnimationFrame(function () {
         pending = false;
         draw();
       });
@@ -190,27 +203,38 @@
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
 
+    // draw now, while the page is still parsing, so it's there at first paint
     draw();
-  }
-
-  initNoiseBackground();
+  })();
 </script>
+
+<style is:global>
+  /* root background (propagated from body): shows only in the strip revealed
+     by rubber-band overscroll, so match the navy base */
+  html body {
+    background-color: #0b1426;
+  }
+</style>
 
 <style>
   .noise-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: absolute;
+    inset: 0;
     z-index: -20;
+    pointer-events: none;
+  }
+
+  .noise-bg__view {
+    position: sticky;
+    top: 0;
     width: 100%;
     /* large viewport height: mobile URL bar show/hide doesn't trigger re-renders */
     height: 100vh;
     height: 100lvh;
-    pointer-events: none;
     /* fallback ≈ first screen of the shader (CSS lists top layer first) */
     background:
-      radial-gradient(59.4% 75% at 81.25% 10%, rgba(30, 50, 102, 0.45), rgba(30, 50, 102, 0.22) 50%, transparent),
-      radial-gradient(56% 60% at 59% 30%, rgba(23, 37, 84, 0.3), rgba(23, 37, 84, 0.15) 50%, transparent),
+      radial-gradient(59.4% 95% at 81.25% 15%, rgba(30, 50, 102, 0.45), rgba(30, 50, 102, 0.22) 50%, transparent),
+      radial-gradient(56% 75% at 59% 40%, rgba(23, 37, 84, 0.3), rgba(23, 37, 84, 0.15) 50%, transparent),
       #0b1426;
   }
 
@@ -218,11 +242,5 @@
     display: block;
     width: 100%;
     height: 100%;
-    opacity: 0;
-    transition: opacity 0.6s ease-out;
-  }
-
-  .noise-bg__canvas[data-ready] {
-    opacity: 1;
   }
 </style>
